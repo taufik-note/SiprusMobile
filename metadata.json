@@ -1,0 +1,6 @@
+{
+  "name": "Uniroom Unimus",
+  "description": "Sistem Digitalisasi Peminjaman Ruangan Kampus Universitas Muhammadiyah Semarang (UNIMUS)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
