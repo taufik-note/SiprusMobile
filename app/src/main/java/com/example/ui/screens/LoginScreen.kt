@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.AppViewModel
 import com.example.data.Role
 
@@ -50,6 +51,16 @@ fun LoginScreen(
             .background(blueGradient)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
+        // Watermark Logo
+        AsyncImage(
+            model = "https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Muhammadiyah_Semarang.png",
+            contentDescription = "Watermark",
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            alpha = 0.15f
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.AppViewModel
 import com.example.data.Peminjaman
 import com.example.data.PeminjamanStatus
@@ -50,15 +51,26 @@ fun DashboardScreen(
     }
     val approvedPeminjaman = peminjamanList.count { it.status == PeminjamanStatus.DISETUJUI }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC)) // Light gray background
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Welcoming Card Header matching "Selamat Siang, Taufik Hidayat"
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Watermark Logo
+        AsyncImage(
+            model = "https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Muhammadiyah_Semarang.png",
+            contentDescription = "Watermark",
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            alpha = 0.05f
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF8FAFC).copy(alpha = 0.85f)) // Light gray background, slightly transparent to show watermark
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Welcoming Card Header matching "Selamat Siang, Taufik Hidayat"
         Card(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
@@ -333,6 +345,7 @@ fun DashboardScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+    }
     }
 }
 
