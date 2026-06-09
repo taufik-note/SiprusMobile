@@ -141,6 +141,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         onClick = { activeTab = MainTab.BERANDA },
                         icon = { Icon(Icons.Default.Home, contentDescription = "Beranda") },
                         label = { Text("Beranda", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)
@@ -153,6 +154,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         onClick = { activeTab = MainTab.CARI },
                         icon = { Icon(Icons.Default.Search, contentDescription = "Cari") },
                         label = { Text("Cari", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)
@@ -165,6 +167,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         onClick = { activeTab = MainTab.RIWAYAT },
                         icon = { Icon(Icons.Default.Receipt, contentDescription = "Riwayat") },
                         label = { Text("Riwayat", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)
@@ -187,6 +190,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                             }
                         },
                         label = { Text("Validasi", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)
@@ -200,6 +204,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                             onClick = { activeTab = MainTab.MASTER },
                             icon = { Icon(Icons.Default.Storage, contentDescription = "Master") },
                             label = { Text("Master", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            alwaysShowLabel = false,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color(0xFF1E3A8A),
                                 indicatorColor = Color(0xFFEFF6FF)
@@ -213,6 +218,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         onClick = { activeTab = MainTab.PANDUAN },
                         icon = { Icon(Icons.Default.Book, contentDescription = "Panduan") },
                         label = { Text("Panduan", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)
@@ -225,6 +231,7 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         onClick = { activeTab = MainTab.PROFIL },
                         icon = { Icon(Icons.Default.Person, contentDescription = "Profil") },
                         label = { Text("Profil", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                        alwaysShowLabel = false,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color(0xFF1E3A8A),
                             indicatorColor = Color(0xFFEFF6FF)

@@ -136,11 +136,11 @@ fun DashboardScreen(
 
         // Summary Metric Row ("Total Peminjaman", "Menunggu Validasi", "Izin Disetujui")
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MetricCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "TOTAL PEMINJAMAN",
                 value = totalPeminjaman.toString(),
                 subtitle = "Kumulatif riwayat",
@@ -150,7 +150,7 @@ fun DashboardScreen(
             )
 
             MetricCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "MENUNGGU VALIDASI",
                 value = pendingPeminjaman.toString(),
                 subtitle = "Sedang ditinjau",
@@ -160,7 +160,7 @@ fun DashboardScreen(
             )
 
             MetricCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "IZIN DISETUJUI",
                 value = approvedPeminjaman.toString(),
                 subtitle = "Selesai verifikasi",
@@ -221,25 +221,25 @@ fun DashboardScreen(
 
                 // Status breakdown labels
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "DISETUJUI",
                         value = rektoratApproved.toString(),
                         color = Color(0xFF10B981),
                         bgColor = Color(0xFFE6F4EA)
                     )
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "PENDING",
                         value = rektoratPending.toString(),
                         color = Color(0xFFF59E0B),
                         bgColor = Color(0xFFFEF7E0)
                     )
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "DITOLAK",
                         value = rektoratRejected.toString(),
                         color = Color(0xFFEF4444),
@@ -366,7 +366,7 @@ fun MetricCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp).fillMaxHeight()
         ) {
             Box(
                 modifier = Modifier
