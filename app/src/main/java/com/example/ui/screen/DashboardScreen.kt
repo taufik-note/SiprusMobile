@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,7 +23,6 @@ import com.example.ui.viewmodel.AppViewModel
 import com.example.data.Peminjaman
 import com.example.data.PeminjamanStatus
 import com.example.data.Role
-import com.example.ui.component.BookingListItem
 
 @Composable
 fun DashboardScreen(
@@ -86,49 +84,20 @@ fun DashboardScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "${userRole.name} WORKSPACE",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-
-                        // Status API Badge (Identik dengan indikator Online di Web)
-                        val apiStatus by viewModel.apiStatusMessage.collectAsState()
-                        val isOnline = apiStatus.contains("Berhasil")
-                        Surface(
-                            color = if (isOnline) Color(0xFF10B981) else Color(0xFFF59E0B),
-                            shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.height(20.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(modifier = Modifier.size(6.dp).background(Color.White, CircleShape))
-                                Text(
-                                    text = if (isOnline) "SERVER ONLINE" else "CONNECTING",
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                            }
-                        }
+                        Text(
+                            text = "${userRole.name} WORKSPACE",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = "Selamat Siang, ${currentUser?.name ?: "Sesi Guest"}!",
@@ -136,6 +105,8 @@ fun DashboardScreen(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
+
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "Selamat datang di portal UniRoom. Cari dan ajukan izin peminjaman ruangan perkuliahan, laboratorium, atau aula secara instan di sini.",
@@ -163,41 +134,41 @@ fun DashboardScreen(
             }
         }
 
-                // Summary Metric Row ("Total Peminjaman", "Menunggu Validasi", "Izin Disetujui")
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    MetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "TOTAL BOOKING",
-                        value = totalPeminjaman.toString(),
-                        subtitle = "Database Cloud",
-                        icon = Icons.Default.Description,
-                        iconColor = Color(0xFF4F46E5),
-                        bgColor = Color(0xFFEEF2FF)
-                    )
+        // Summary Metric Row ("Total Peminjaman", "Menunggu Validasi", "Izin Disetujui")
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MetricCard(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                title = "TOTAL PEMINJAMAN",
+                value = totalPeminjaman.toString(),
+                subtitle = "Kumulatif riwayat",
+                icon = Icons.Default.Description,
+                iconColor = Color(0xFF3B82F6),
+                bgColor = Color(0xFFEFF6FF)
+            )
 
-                    MetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "PENDING RT",
-                        value = pendingPeminjaman.toString(),
-                        subtitle = "Perlu Validasi",
-                        icon = Icons.Default.HistoryEdu,
-                        iconColor = Color(0xFFF59E0B),
-                        bgColor = Color(0xFFFFFBEB)
-                    )
+            MetricCard(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                title = "MENUNGGU VALIDASI",
+                value = pendingPeminjaman.toString(),
+                subtitle = "Sedang ditinjau",
+                icon = Icons.Default.Pending,
+                iconColor = Color(0xFFF59E0B),
+                bgColor = Color(0xFFFEF3C7)
+            )
 
-                    MetricCard(
-                        modifier = Modifier.weight(1f),
-                        title = "APPROVED",
-                        value = approvedPeminjaman.toString(),
-                        subtitle = "Siap Digunakan",
-                        icon = Icons.Default.Verified,
-                        iconColor = Color(0xFF10B981),
-                        bgColor = Color(0xFFECFDF5)
-                    )
-                }
+            MetricCard(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                title = "IZIN DISETUJUI",
+                value = approvedPeminjaman.toString(),
+                subtitle = "Selesai verifikasi",
+                icon = Icons.Default.CheckCircle,
+                iconColor = Color(0xFF10B981),
+                bgColor = Color(0xFFECFDF5)
+            )
+        }
 
         // Stats by Building Block
         Card(
@@ -250,25 +221,25 @@ fun DashboardScreen(
 
                 // Status breakdown labels
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "DISETUJUI",
                         value = rektoratApproved.toString(),
                         color = Color(0xFF10B981),
                         bgColor = Color(0xFFE6F4EA)
                     )
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "PENDING",
                         value = rektoratPending.toString(),
                         color = Color(0xFFF59E0B),
                         bgColor = Color(0xFFFEF7E0)
                     )
                     StatusGrid(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         label = "DITOLAK",
                         value = rektoratRejected.toString(),
                         color = Color(0xFFEF4444),
@@ -395,7 +366,7 @@ fun MetricCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(12.dp).fillMaxHeight()
         ) {
             Box(
                 modifier = Modifier
@@ -434,4 +405,119 @@ fun StatusGrid(
     }
 }
 
+@Composable
+fun BookingListItem(item: Peminjaman) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFEEF2F6), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(text = item.ruanganKode, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                }
+
+                StatusTag(status = item.status)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = item.ruanganNama,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Pemohon: ${item.namaMahasiswa}",
+                    fontSize = 11.sp,
+                    color = Color(0xFF475569)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Label, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "\"${item.tujuan}\"",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF64748B)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color(0xFFF1F5F9))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color(0xFF3B82F6), modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(item.tanggal, fontSize = 10.sp, color = Color(0xFF475569))
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Icon(Icons.Default.AccessTime, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("${item.jamMulai} - ${item.jamSelesai} WIB", fontSize = 10.sp, color = Color(0xFF475569))
+                }
+
+                Text(
+                    text = "ID: #${item.id.replace("PEM", "")}",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF94A3B8)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatusTag(status: PeminjamanStatus) {
+    val (bgColor, textColor, label) = when (status) {
+        PeminjamanStatus.MENUNGGU_VERIFIKASI_RT -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), "VERIFIKASI RT")
+        PeminjamanStatus.MENUNGGU_VERIFIKASI_SIPRUS -> Triple(Color(0xFFDBEAFE), Color(0xFF2563EB), "VERIFIKASI SIPRUS")
+        PeminjamanStatus.DISETUJUI -> Triple(Color(0xFFD1FAE5), Color(0xFF059669), "DISETUJUI")
+        PeminjamanStatus.DITOLAK -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "DITOLAK")
+    }
+
+    Box(
+        modifier = Modifier
+            .background(bgColor, RoundedCornerShape(12.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+    }
+}
+
+// Fixed calculation variables
 private const val rektoratBookCount = 3
