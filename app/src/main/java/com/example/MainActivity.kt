@@ -18,10 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.data.AppViewModel
+import com.example.ui.viewmodel.AppViewModel
 import com.example.data.PeminjamanStatus
 import com.example.data.Role
-import com.example.ui.screens.*
+import com.example.ui.screen.*
 import com.example.ui.theme.MyApplicationTheme
 
 enum class MainTab {
@@ -30,6 +30,7 @@ enum class MainTab {
     RIWAYAT,
     VALIDASI,
     MASTER,
+    LAPORAN,
     PANDUAN,
     PROFIL
 }
@@ -147,51 +148,71 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         )
                     )
 
-                    // 2. Cari
-                    NavigationBarItem(
-                        selected = activeTab == MainTab.CARI,
-                        onClick = { activeTab = MainTab.CARI },
-                        icon = { Icon(Icons.Default.Search, contentDescription = "Cari") },
-                        label = { Text("Cari", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF1E3A8A),
-                            indicatorColor = Color(0xFFEFF6FF)
+                    // 2. Cari (Hide for Admin/Kepala RT)
+                    if (userRole != Role.ADMIN_RT && userRole != Role.KEPALA_RT) {
+                        NavigationBarItem(
+                            selected = activeTab == MainTab.CARI,
+                            onClick = { activeTab = MainTab.CARI },
+                            icon = { Icon(Icons.Default.Search, contentDescription = "Cari") },
+                            label = { Text("Cari", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF1E3A8A),
+                                indicatorColor = Color(0xFFEFF6FF)
+                            )
                         )
-                    )
+                    }
 
-                    // 3. Riwayat
-                    NavigationBarItem(
-                        selected = activeTab == MainTab.RIWAYAT,
-                        onClick = { activeTab = MainTab.RIWAYAT },
-                        icon = { Icon(Icons.Default.Receipt, contentDescription = "Riwayat") },
-                        label = { Text("Riwayat", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF1E3A8A),
-                            indicatorColor = Color(0xFFEFF6FF)
+                    // 3. Riwayat (Only for student)
+                    if (userRole == Role.MAHASISWA) {
+                        NavigationBarItem(
+                            selected = activeTab == MainTab.RIWAYAT,
+                            onClick = { activeTab = MainTab.RIWAYAT },
+                            icon = { Icon(Icons.Default.Receipt, contentDescription = "Riwayat") },
+                            label = { Text("Riwayat", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF1E3A8A),
+                                indicatorColor = Color(0xFFEFF6FF)
+                            )
                         )
-                    )
+                    }
 
-                    // 4. Validasi (Conditional badge representing pending approvals)
-                    NavigationBarItem(
-                        selected = activeTab == MainTab.VALIDASI,
-                        onClick = { activeTab = MainTab.VALIDASI },
-                        icon = {
-                            BadgedBox(
-                                badge = {
-                                    if (pendingCount > 0) {
-                                        Badge { Text(pendingCount.toString()) }
+                    // 4. Validasi (Only for Admin/Kepala RT)
+                    if (userRole == Role.ADMIN_RT || userRole == Role.KEPALA_RT) {
+                        NavigationBarItem(
+                            selected = activeTab == MainTab.VALIDASI,
+                            onClick = { activeTab = MainTab.VALIDASI },
+                            icon = {
+                                BadgedBox(
+                                    badge = {
+                                        if (pendingCount > 0) {
+                                            Badge { Text(pendingCount.toString()) }
+                                        }
                                     }
+                                ) {
+                                    Icon(Icons.Default.FactCheck, contentDescription = "Validasi")
                                 }
-                            ) {
-                                Icon(Icons.Default.FactCheck, contentDescription = "Validasi")
-                            }
-                        },
-                        label = { Text("Validasi", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF1E3A8A),
-                            indicatorColor = Color(0xFFEFF6FF)
+                            },
+                            label = { Text("Validasi", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF1E3A8A),
+                                indicatorColor = Color(0xFFEFF6FF)
+                            )
                         )
-                    )
+                    }
+
+                    // 4b. Laporan (Only for Admin/Kepala RT)
+                    if (userRole == Role.ADMIN_RT || userRole == Role.KEPALA_RT) {
+                        NavigationBarItem(
+                            selected = activeTab == MainTab.LAPORAN,
+                            onClick = { activeTab = MainTab.LAPORAN },
+                            icon = { Icon(Icons.Default.Assessment, contentDescription = "Laporan") },
+                            label = { Text("Laporan", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF1E3A8A),
+                                indicatorColor = Color(0xFFEFF6FF)
+                            )
+                        )
+                    }
 
                     // 5. Master (Only visible or accessible for Admin/Kepala RT structure)
                     if (userRole == Role.ADMIN_RT || userRole == Role.KEPALA_RT) {
@@ -207,17 +228,19 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         )
                     }
 
-                    // 6. Panduan
-                    NavigationBarItem(
-                        selected = activeTab == MainTab.PANDUAN,
-                        onClick = { activeTab = MainTab.PANDUAN },
-                        icon = { Icon(Icons.Default.Book, contentDescription = "Panduan") },
-                        label = { Text("Panduan", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF1E3A8A),
-                            indicatorColor = Color(0xFFEFF6FF)
+                    // 6. Panduan (Only for students/guests)
+                    if (userRole != Role.ADMIN_RT && userRole != Role.KEPALA_RT) {
+                        NavigationBarItem(
+                            selected = activeTab == MainTab.PANDUAN,
+                            onClick = { activeTab = MainTab.PANDUAN },
+                            icon = { Icon(Icons.Default.Book, contentDescription = "Panduan") },
+                            label = { Text("Panduan", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF1E3A8A),
+                                indicatorColor = Color(0xFFEFF6FF)
+                            )
                         )
-                    )
+                    }
 
                     // 7. Profil
                     NavigationBarItem(
@@ -258,6 +281,9 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         viewModel = viewModel
                     )
                     MainTab.MASTER -> MasterDataScreen(
+                        viewModel = viewModel
+                    )
+                    MainTab.LAPORAN -> ReportScreen(
                         viewModel = viewModel
                     )
                     MainTab.PANDUAN -> GuideScreen()

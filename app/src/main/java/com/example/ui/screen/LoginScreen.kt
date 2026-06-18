@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.example.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.data.AppViewModel
+import com.example.ui.viewmodel.AppViewModel
 import com.example.data.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,13 +187,9 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             if (email.isNotEmpty()) {
-                                // Match password demo role
-                                when {
-                                    email.contains("admin") || email.contains("iqbal") -> viewModel.login(email, Role.ADMIN_RT)
-                                    email.contains("avril") || email.contains("siprus") -> viewModel.login(email, Role.KEPALA_RT)
-                                    else -> viewModel.login(email, Role.MAHASISWA)
+                                viewModel.login(email, password) { success, _ ->
+                                    if (success) onLoginSuccess()
                                 }
-                                onLoginSuccess()
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
@@ -222,8 +218,9 @@ fun LoginScreen(
                             .height(48.dp)
                             .background(Color(0xFFF1F5F9), RoundedCornerShape(12.dp))
                             .clickable {
-                                viewModel.loginWithDemo(Role.GUEST)
-                                onLoginSuccess()
+                                viewModel.loginWithDemo(Role.GUEST) {
+                                    onLoginSuccess()
+                                }
                             }
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -261,8 +258,7 @@ fun LoginScreen(
                 iconColor = Color(0xFF3B82F6),
                 bgColor = Color(0xFFEFF6FF).copy(alpha = 0.9f)
             ) {
-                viewModel.loginWithDemo(Role.MAHASISWA)
-                onLoginSuccess()
+                viewModel.loginWithDemo(Role.MAHASISWA) { onLoginSuccess() }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -274,8 +270,7 @@ fun LoginScreen(
                 iconColor = Color(0xFFF59E0B),
                 bgColor = Color(0xFFFEF3C7).copy(alpha = 0.9f)
             ) {
-                viewModel.loginWithDemo(Role.ADMIN_RT)
-                onLoginSuccess()
+                viewModel.loginWithDemo(Role.ADMIN_RT) { onLoginSuccess() }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -287,8 +282,7 @@ fun LoginScreen(
                 iconColor = Color(0xFF8B5CF6),
                 bgColor = Color(0xFFF5F3FF).copy(alpha = 0.9f)
             ) {
-                viewModel.loginWithDemo(Role.KEPALA_RT)
-                onLoginSuccess()
+                viewModel.loginWithDemo(Role.KEPALA_RT) { onLoginSuccess() }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
