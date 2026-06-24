@@ -5,24 +5,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ui.viewmodel.AppViewModel
 import com.example.data.PeminjamanStatus
 import com.example.data.Role
 import com.example.ui.screen.*
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.viewmodel.AppViewModel
 
 enum class MainTab {
     BERANDA,
@@ -32,7 +36,8 @@ enum class MainTab {
     MASTER,
     LAPORAN,
     PANDUAN,
-    PROFIL
+    PROFIL,
+    NOTIFIKASI
 }
 
 class MainActivity : ComponentActivity() {
@@ -70,64 +75,118 @@ fun UniroomAppContent(viewModel: AppViewModel) {
         // Count pending validations dynamically to display badge
         val pendingCount = peminjamanList.count { p ->
             if (userRole == Role.ADMIN_RT) {
-                p.status == PeminjamanStatus.MENUNGGU_VERIFIKASI_RT
+                p.status == PeminjamanStatus.MENUNGGU_RT
             } else if (userRole == Role.KEPALA_RT) {
-                p.status == PeminjamanStatus.MENUNGGU_VERIFIKASI_SIPRUS
+                p.status == PeminjamanStatus.MENUNGGU_KEPALA
             } else {
-                p.status == PeminjamanStatus.MENUNGGU_VERIFIKASI_RT || p.status == PeminjamanStatus.MENUNGGU_VERIFIKASI_SIPRUS
+                p.status == PeminjamanStatus.MENUNGGU_RT || p.status == PeminjamanStatus.MENUNGGU_KEPALA
             }
         }
 
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
+                TopAppBar(
                     title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MeetingRoom,
-                                contentDescription = null,
-                                tint = Color(0xFFFBBF24),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = Color(0xFF4F46E5),
+                                shape = CircleShape,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Business,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Uniroom Unimus",
+                                text = "UNIROOM",
                                 fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF1E293B),
+                                letterSpacing = 0.5.sp
                             )
                         }
                     },
                     actions = {
-                        // Small role icon badge
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .background(
-                                    when (userRole) {
-                                        Role.MAHASISWA -> Color(0xFF3B82F6)
-                                        Role.ADMIN_RT -> Color(0xFFF59E0B)
-                                        Role.KEPALA_RT -> Color(0xFF8B5CF6)
-                                        Role.GUEST -> Color(0xFF64748B)
-                                    },
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Text(
-                                text = userRole.name,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            // Panduan Button
+                            Surface(
+                                onClick = { activeTab = MainTab.PANDUAN },
+                                color = Color(0xFFEEF2F6),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.MenuBook,
+                                        contentDescription = "Panduan",
+                                        tint = Color(0xFF4F46E5),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            // Notification Button
+                            Box {
+                                IconButton(
+                                    onClick = { activeTab = MainTab.NOTIFIKASI },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    BadgedBox(
+                                        badge = {
+                                            if (peminjamanList.isNotEmpty()) {
+                                                Badge(
+                                                    containerColor = Color(0xFFEF4444),
+                                                    modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = peminjamanList.size.coerceAtMost(9).toString(),
+                                                        color = Color.White,
+                                                        fontSize = 8.sp
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.NotificationsNone,
+                                            contentDescription = "Notifications",
+                                            tint = Color(0xFF64748B),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Logout Button
+                            Surface(
+                                onClick = { viewModel.logout() },
+                                color = Color(0xFFF8FAFC),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                                        contentDescription = "Logout",
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFF1E3A8A) // Deep Royal Blue Header
-                    )
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White
+                    ),
+                    modifier = Modifier.shadow(4.dp)
                 )
             },
             bottomBar = {
@@ -228,20 +287,6 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                         )
                     }
 
-                    // 6. Panduan (Only for students/guests)
-                    if (userRole != Role.ADMIN_RT && userRole != Role.KEPALA_RT) {
-                        NavigationBarItem(
-                            selected = activeTab == MainTab.PANDUAN,
-                            onClick = { activeTab = MainTab.PANDUAN },
-                            icon = { Icon(Icons.Default.Book, contentDescription = "Panduan") },
-                            label = { Text("Panduan", fontSize = 10.sp, fontWeight = FontWeight.Medium) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF1E3A8A),
-                                indicatorColor = Color(0xFFEFF6FF)
-                            )
-                        )
-                    }
-
                     // 7. Profil
                     NavigationBarItem(
                         selected = activeTab == MainTab.PROFIL,
@@ -289,7 +334,14 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                     MainTab.PANDUAN -> GuideScreen()
                     MainTab.PROFIL -> ProfileScreen(
                         viewModel = viewModel,
-                        onLogoutClicked = {}
+                        onLogoutClicked = {
+                            viewModel.logout()
+                            activeTab = MainTab.BERANDA
+                        }
+                    )
+                    MainTab.NOTIFIKASI -> NotificationScreen(
+                        viewModel = viewModel,
+                        onBack = { activeTab = MainTab.BERANDA }
                     )
                 }
             }

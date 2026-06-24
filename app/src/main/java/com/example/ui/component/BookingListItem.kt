@@ -35,7 +35,7 @@ fun BookingListItem(item: Peminjaman) {
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = item.ruanganKode,
+                        text = item.ruang?.kode ?: "-",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -48,7 +48,7 @@ fun BookingListItem(item: Peminjaman) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = item.ruanganNama,
+                text = item.ruang?.nama ?: "Ruangan",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF1E293B)
@@ -56,8 +56,8 @@ fun BookingListItem(item: Peminjaman) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            DetailRow(icon = Icons.Default.Person, text = "Pemohon: ${item.namaMahasiswa}")
-            DetailRow(icon = Icons.Default.Label, text = "\"${item.tujuan}\"")
+            DetailRow(icon = Icons.Default.Person, text = "Pemohon: ${item.user?.name ?: "Mahasiswa"}")
+            DetailRow(icon = Icons.Default.Label, text = "\"${item.keperluan}\"")
 
             Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = Color(0xFFF1F5F9))
@@ -77,11 +77,11 @@ fun BookingListItem(item: Peminjaman) {
 
                     Icon(Icons.Default.AccessTime, null, tint = Color(0xFFEF4444), modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("${item.jamMulai} WIB", fontSize = 11.sp, color = Color(0xFF64748B))
+                    Text("${item.waktuMulai} WIB", fontSize = 11.sp, color = Color(0xFF64748B))
                 }
 
                 Text(
-                    text = "ID: #${item.id.replace("PEM", "")}",
+                    text = "ID: #${item.id}",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFCBD5E1)

@@ -1,5 +1,6 @@
 package com.example.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,9 +34,15 @@ fun LoginScreen(
     viewModel: AppViewModel,
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
+    val apiStatus by viewModel.apiStatusMessage.collectAsState()
     var email by remember { mutableStateOf("taufik@unimus.ac.id") }
     var password by remember { mutableStateOf("123") }
     val scrollState = rememberScrollState()
+
+    // Status Indicator
+    val statusColor = if (apiStatus.contains("Terhubung")) Color(0xFF10B981) else Color(0xFFF59E0B)
+    val statusIcon = if (apiStatus.contains("Terhubung")) Icons.Default.CloudDone else Icons.Default.CloudOff
 
     // Royal Blue Gradients
     val blueGradient = Brush.verticalGradient(
@@ -69,6 +77,32 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // API Status Indicator Pill
+            Surface(
+                color = Color.White.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = statusIcon,
+                        contentDescription = null,
+                        tint = statusColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = apiStatus,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             // Logo Branding matching header in reference
@@ -187,8 +221,12 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             if (email.isNotEmpty()) {
-                                viewModel.login(email, password) { success, _ ->
-                                    if (success) onLoginSuccess()
+                                viewModel.login(email, password) { success, message ->
+                                    if (success) {
+                                        onLoginSuccess()
+                                    } else {
+                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             }
                         },

@@ -15,10 +15,11 @@ import com.example.data.PeminjamanStatus
 @Composable
 fun StatusTag(status: PeminjamanStatus) {
     val (bgColor, textColor, label) = when (status) {
-        PeminjamanStatus.MENUNGGU_VERIFIKASI_RT -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), "VERIFIKASI RT")
-        PeminjamanStatus.MENUNGGU_VERIFIKASI_SIPRUS -> Triple(Color(0xFFDBEAFE), Color(0xFF2563EB), "VERIFIKASI SIPRUS")
+        PeminjamanStatus.MENUNGGU_RT -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), "VERIFIKASI RT")
+        PeminjamanStatus.MENUNGGU_KEPALA -> Triple(Color(0xFFDBEAFE), Color(0xFF2563EB), "VERIFIKASI SIPRUS")
         PeminjamanStatus.DISETUJUI -> Triple(Color(0xFFD1FAE5), Color(0xFF059669), "DISETUJUI")
-        PeminjamanStatus.DITOLAK -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "DITOLAK")
+        PeminjamanStatus.DITOLAK_RT, PeminjamanStatus.DITOLAK_KEPALA -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "DITOLAK")
+        PeminjamanStatus.BUTUH_REVISI -> Triple(Color(0xFFF3E8FF), Color(0xFF7C3AED), "REVISI")
     }
 
     Surface(
