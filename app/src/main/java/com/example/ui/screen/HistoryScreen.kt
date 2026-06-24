@@ -1,5 +1,8 @@
 package com.example.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.viewmodel.AppViewModel
+import com.example.ui.component.FilterTriggerButton
+import com.example.ui.component.HorizontalOptionList
+import com.example.ui.component.StatusTag
 import com.example.data.Peminjaman
 import com.example.data.PeminjamanStatus
 import com.example.data.Role
@@ -28,16 +34,18 @@ fun HistoryScreen(viewModel: AppViewModel) {
     val scrollState = rememberScrollState()
 
     var filterKeyword by remember { mutableStateOf("") }
-    var selectedStatusFilter by remember { mutableStateOf("Semua Status") }
+    var selectedStatusFilter by remember { mutableStateOf("Semua") }
+    var isFilterExpanded by remember { mutableStateOf(false) }
+    var showStatusOptions by remember { mutableStateOf(false) }
     var showSuccessExport by remember { mutableStateOf(false) }
 
     val userRole = currentUser?.role ?: Role.GUEST
 
     val filteredList = peminjamanList.filter { p ->
         val matchesStatus = when (selectedStatusFilter) {
-            "Semua Status" -> true
-            "Menunggu RT" -> p.status == PeminjamanStatus.MENUNGGU_RT
-            "Menunggu Kepala" -> p.status == PeminjamanStatus.MENUNGGU_KEPALA
+            "Semua" -> true
+            "Verifikasi RT" -> p.status == PeminjamanStatus.MENUNGGU_RT
+            "Verifikasi Siprus" -> p.status == PeminjamanStatus.MENUNGGU_KEPALA
             "Disetujui" -> p.status == PeminjamanStatus.DISETUJUI
             "Ditolak" -> p.status == PeminjamanStatus.DITOLAK_RT || p.status == PeminjamanStatus.DITOLAK_KEPALA
             "Revisi" -> p.status == PeminjamanStatus.BUTUH_REVISI
@@ -64,23 +72,73 @@ fun HistoryScreen(viewModel: AppViewModel) {
             }
         }
 
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = filterKeyword, onValueChange = { filterKeyword = it }, placeholder = { Text("Cari...") },
-                    shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth(), leadingIcon = { Icon(Icons.Default.Search, null) }
-                )
-                var statusExpanded by remember { mutableStateOf(false) }
-                Box {
-                    OutlinedTextField(
-                        value = selectedStatusFilter, onValueChange = {}, label = { Text("Filter Status") }, readOnly = true,
-                        shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = { IconButton(onClick = { statusExpanded = !statusExpanded }) { Icon(Icons.Default.ArrowDropDown, null) } }
+        // Filter Section
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                onClick = { isFilterExpanded = !isFilterExpanded },
+                color = Color(0xFFF1F5F9),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Tune, null, tint = Color(0xFF6366F1), modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("SARING RIWAYAT", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                    }
+                    Icon(
+                        imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = Color(0xFF64748B)
                     )
-                    DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
-                        listOf("Semua Status", "Menunggu RT", "Menunggu Kepala", "Disetujui", "Ditolak", "Revisi").forEach { label ->
-                            DropdownMenuItem(text = { Text(label) }, onClick = { selectedStatusFilter = label; statusExpanded = false })
-                        }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isFilterExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedTextField(
+                        value = filterKeyword,
+                        onValueChange = { filterKeyword = it },
+                        placeholder = { Text("Cari nama, ruangan, keperluan...", fontSize = 12.sp) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp)) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4F46E5),
+                            focusedContainerColor = Color(0xFFF8FAFC),
+                            unfocusedContainerColor = Color(0xFFF8FAFC)
+                        )
+                    )
+
+                    FilterTriggerButton(
+                        label = "STATUS: ${selectedStatusFilter.uppercase()}",
+                        selected = "",
+                        isExpanded = showStatusOptions,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        showStatusOptions = !showStatusOptions
+                    }
+
+                    AnimatedVisibility(visible = showStatusOptions) {
+                        HorizontalOptionList(
+                            options = listOf("Semua", "Menunggu RT", "Menunggu Kepala", "Disetujui", "Ditolak", "Revisi"),
+                            selected = selectedStatusFilter,
+                            onSelected = { selectedStatusFilter = it; showStatusOptions = false }
+                        )
                     }
                 }
             }
