@@ -133,8 +133,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val response = apiService.login(mapOf("email" to email, "password" to password))
 
                 if (response.isSuccessful) {
-                    val user = response.body()
-                    if (user != null && !user.token.isNullOrBlank()) {
+                    val loginData = response.body()
+                    if (loginData != null) {
+                        val user = loginData.user
+                        user.token = loginData.token // Simpan token ke dalam objek User
+
                         _currentUser.value = user
                         saveSession(user)
                         logMessage("Terhubung: ${user.name}")

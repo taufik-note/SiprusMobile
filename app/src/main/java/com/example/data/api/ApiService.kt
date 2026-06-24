@@ -1,6 +1,7 @@
 package com.example.data.api
 
 import com.example.data.Gedung
+import com.example.data.LoginResponse
 import com.example.data.Peminjaman
 import com.example.data.ResponseModel
 import com.example.data.Ruangan
@@ -15,7 +16,7 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(
         @Body credentials: Map<String, String>
-    ): Response<User>
+    ): Response<LoginResponse>
 
     // ── Gedung ────────────────────────────────────────────────────────────────
 

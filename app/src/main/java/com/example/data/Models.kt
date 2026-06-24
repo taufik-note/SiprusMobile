@@ -34,7 +34,15 @@ data class User(
     val role: Role,
 
     @SerializedName("token")
-    val token: String? = null
+    var token: String? = null
+)
+
+data class LoginResponse(
+    @SerializedName("token")
+    val token: String,
+
+    @SerializedName("user")
+    val user: User
 )
 
 // ── PeminjamanStatus ──────────────────────────────────────────────────────────
