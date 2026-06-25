@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
 fun UniroomAppContent(viewModel: AppViewModel) {
     val currentUser by viewModel.currentUser.collectAsState()
     val peminjamanList by viewModel.peminjamanList.collectAsState()
+    val notifications by viewModel.notifications.collectAsState()
 
     var activeTab by remember { mutableStateOf(MainTab.BERANDA) }
 
@@ -139,15 +140,16 @@ fun UniroomAppContent(viewModel: AppViewModel) {
                                     onClick = { activeTab = MainTab.NOTIFIKASI },
                                     modifier = Modifier.size(40.dp)
                                 ) {
+                                    val unreadCount = notifications.count { !it.dibaca }
                                     BadgedBox(
                                         badge = {
-                                            if (peminjamanList.isNotEmpty()) {
+                                            if (unreadCount > 0) {
                                                 Badge(
                                                     containerColor = Color(0xFFEF4444),
                                                     modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
                                                 ) {
                                                     Text(
-                                                        text = peminjamanList.size.coerceAtMost(9).toString(),
+                                                        text = unreadCount.coerceAtMost(9).toString(),
                                                         color = Color.White,
                                                         fontSize = 8.sp
                                                     )

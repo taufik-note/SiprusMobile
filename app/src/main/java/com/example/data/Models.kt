@@ -102,6 +102,10 @@ data class Peminjaman(
     @SerializedName("catatanPeralihan")
     val catatanKepala: String? = null,
 
+    // Catatan saat butuh revisi sesuai backend prisma schema
+    @SerializedName("catatanRevisi")
+    val catatanRevisi: String? = null,
+
     @SerializedName("createdAt")
     val createdAt: String? = null,
 
@@ -173,4 +177,46 @@ data class ResponseModel(
 
     @SerializedName("success")
     val success: Boolean? = null
+)
+
+data class ProfileResponse(
+    @SerializedName("message")
+    val message: String,
+
+    @SerializedName("user")
+    val user: User
+)
+
+// ── Request Models ──────────────────────────────────────────────────────────
+
+data class BookingRequest(
+    @SerializedName("ruangId") val ruangId: Int,
+    @SerializedName("tanggal") val tanggal: String,
+    @SerializedName("waktuMulai") val waktuMulai: String,
+    @SerializedName("waktuSelesai") val waktuSelesai: String,
+    @SerializedName("keperluan") val keperluan: String
+)
+
+data class ValidateRequest(
+    @SerializedName("action") val action: String,
+    @SerializedName("alasan") val alasan: String
+)
+
+// ── Notification ─────────────────────────────────────────────────────────────
+
+data class Notification(
+    @SerializedName("id")
+    val id: Int,
+
+    @SerializedName("userId")
+    val userId: Int,
+
+    @SerializedName("pesan")
+    val pesan: String,
+
+    @SerializedName("dibaca")
+    val dibaca: Boolean,
+
+    @SerializedName("createdAt")
+    val createdAt: String
 )

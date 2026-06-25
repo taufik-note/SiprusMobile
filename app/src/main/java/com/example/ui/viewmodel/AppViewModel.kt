@@ -54,6 +54,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _ruanganList = MutableStateFlow<List<Ruangan>>(emptyList())
     val ruanganList: StateFlow<List<Ruangan>> = _ruanganList.asStateFlow()
 
+    private val _notifications = MutableStateFlow<List<Notification>>(emptyList())
+    val notifications: StateFlow<List<Notification>> = _notifications.asStateFlow()
+
+    private val _weeklyAvailability = MutableStateFlow<Map<String, List<Ruangan>>>(emptyMap())
+    val weeklyAvailability: StateFlow<Map<String, List<Ruangan>>> = _weeklyAvailability.asStateFlow()
+
+    private val _isLoadingWeekly = MutableStateFlow(false)
+    val isLoadingWeekly: StateFlow<Boolean> = _isLoadingWeekly.asStateFlow()
+
     /**
      * Pesan status terakhir untuk ditampilkan di UI (snackbar, banner, dsb).
      * Kosong berarti tidak ada pesan aktif.
@@ -222,7 +231,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             try {
-                _ruanganList.value = apiService.getRooms(auth)
+                val rooms = apiService.getRooms(auth)
+                _ruanganList.value = rooms
             } catch (e: Exception) {
                 logMessage("Gagal memuat data ruangan: ${friendlyError(e)}")
             }
@@ -234,6 +244,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 logMessage("Gagal memuat data peminjaman: ${friendlyError(e)}")
+            }
+
+            // 4. Notifikasi
+            try {
+                _notifications.value = apiService.getNotifications(auth)
+            } catch (e: Exception) {
+                // Notifikasi gagal tidak kritikal
             }
 
             _isLoading.value = false
@@ -252,14 +269,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         viewModelScope.launch {
             try {
-                val body = mapOf<String, Any>(
-                    "ruangId"      to ruangId,     // Int — dikirim sebagai angka di JSON
-                    "tanggal"      to tanggal,
-                    "waktuMulai"   to jamMulai,
-                    "waktuSelesai" to jamSelesai,
-                    "keperluan"    to keperluan
+                val request = BookingRequest(
+                    ruangId = ruangId,
+                    tanggal = tanggal,
+                    waktuMulai = jamMulai,
+                    waktuSelesai = jamSelesai,
+                    keperluan = keperluan
                 )
-                val response = apiService.createBooking(bearerToken(), body)
+                val response = apiService.createBooking(bearerToken(), request)
                 if (response.isSuccessful) {
                     refreshDataFromServer()
                     onComplete(true, "Peminjaman berhasil diajukan.")
@@ -275,8 +292,19 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun validateBooking(id: Int, status: PeminjamanStatus, catatan: String = "") {
         viewModelScope.launch {
             try {
-                val body = mapOf("status" to status.name, "catatan" to catatan)
-                val response = apiService.validateBooking(bearerToken(), id, body)
+                val actionValue = when (status) {
+                    PeminjamanStatus.DISETUJUI -> "setuju"
+                    PeminjamanStatus.DITOLAK_RT, PeminjamanStatus.DITOLAK_KEPALA -> "tolak"
+                    PeminjamanStatus.BUTUH_REVISI -> "revisi"
+                    else -> "setuju"
+                }
+
+                val request = ValidateRequest(
+                    action = actionValue,
+                    alasan = catatan
+                )
+                
+                val response = apiService.validateBooking(bearerToken(), id, request)
                 if (response.isSuccessful) {
                     refreshDataFromServer()
                 } else {
@@ -344,12 +372,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val response = apiService.updateProfile(bearerToken(), mapOf("name" to name, "email" to email))
                 if (response.isSuccessful) {
-                    _currentUser.value?.let { current ->
-                        val updated = current.copy(name = name, email = email)
-                        _currentUser.value = updated
-                        saveSession(updated)
+                    val updatedUser = response.body()?.user
+                    if (updatedUser != null) {
+                        // Pertahankan token lama agar sesi tidak putus
+                        val userWithToken = updatedUser.copy(token = _currentUser.value?.token)
+                        _currentUser.value = userWithToken
+                        saveSession(userWithToken)
+                        onResult(true, "Profil berhasil diperbarui.")
+                    } else {
+                        onResult(false, "Profil diperbarui tapi data gagal dimuat.")
                     }
-                    onResult(true, "Profil berhasil diperbarui.")
                 } else {
                     onResult(false, "Gagal memperbarui profil: ${parseErrorMessage(response)}")
                 }
@@ -367,9 +399,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val body = mapOf(
-                    "current_password"          to current,
-                    "new_password"              to new,
-                    "new_password_confirmation" to confirm
+                    "oldPassword" to current, // Sesuai Backend: oldPassword
+                    "newPassword" to new     // Sesuai Backend: newPassword
                 )
                 val response = apiService.updatePassword(bearerToken(), body)
                 if (response.isSuccessful) {
@@ -379,6 +410,62 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 onResult(false, "Error: ${friendlyError(e)}")
+            }
+        }
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+
+    fun markAllNotificationsRead() {
+        viewModelScope.launch {
+            try {
+                val response = apiService.markAllNotificationsAsRead(bearerToken())
+                if (response.isSuccessful) {
+                    refreshDataFromServer()
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    fun fetchWeeklyAvailability(
+        startDate: String,
+        waktuMulai: String,
+        waktuSelesai: String,
+        gedungId: String?,
+        kapasitas: String?
+    ) {
+        viewModelScope.launch {
+            _isLoadingWeekly.value = true
+            val results = mutableMapOf<String, List<Ruangan>>()
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val calendar = java.util.Calendar.getInstance()
+            
+            try {
+                val start = sdf.parse(startDate) ?: java.util.Date()
+                val token = bearerToken()
+
+                // Ambil data untuk 7 hari ke depan
+                for (i in 0 until 7) {
+                    calendar.time = start
+                    calendar.add(java.util.Calendar.DAY_OF_YEAR, i)
+                    val currentDateStr = sdf.format(calendar.time)
+                    
+                    try {
+                        val available = apiService.getAvailableRooms(
+                            token, currentDateStr, waktuMulai, waktuSelesai, kapasitas, gedungId
+                        )
+                        results[currentDateStr] = available
+                    } catch (e: Exception) {
+                        results[currentDateStr] = emptyList()
+                    }
+                }
+                _weeklyAvailability.value = results
+            } catch (e: Exception) {
+                logMessage("Gagal memuat ketersediaan sepekan")
+            } finally {
+                _isLoadingWeekly.value = false
             }
         }
     }

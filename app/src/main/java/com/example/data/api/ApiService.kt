@@ -1,11 +1,15 @@
 package com.example.data.api
 
+import com.example.data.BookingRequest
 import com.example.data.Gedung
 import com.example.data.LoginResponse
+import com.example.data.Notification
 import com.example.data.Peminjaman
+import com.example.data.ProfileResponse
 import com.example.data.ResponseModel
 import com.example.data.Ruangan
 import com.example.data.User
+import com.example.data.ValidateRequest
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -38,20 +42,30 @@ interface ApiService {
         @Header("Authorization") token: String   // endpoint butuh auth
     ): List<Ruangan>
 
+    @GET("ruang/available")
+    suspend fun getAvailableRooms(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String,
+        @Query("waktuMulai") waktuMulai: String,
+        @Query("waktuSelesai") waktuSelesai: String,
+        @Query("kapasitas") kapasitas: String?,
+        @Query("gedungId") gedungId: String?
+    ): List<Ruangan>
+
     @POST("ruang")
     suspend fun addRuangan(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: Map<String, @JvmSuppressWildcards Any>
     ): Response<ResponseModel>
 
     // ── Booking ───────────────────────────────────────────────────────────────
 
-    @GET("booking/my")
+    @GET("booking/history")
     suspend fun getMyHistory(
         @Header("Authorization") token: String
     ): List<Peminjaman>
 
-    @GET("booking")
+    @GET("booking/all")
     suspend fun getAllBookings(
         @Header("Authorization") token: String
     ): List<Peminjaman>
@@ -59,27 +73,45 @@ interface ApiService {
     @POST("booking")
     suspend fun createBooking(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: BookingRequest
     ): Response<ResponseModel>
 
     @PATCH("booking/{id}/validate")
     suspend fun validateBooking(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body body: Map<String, String>
+        @Body body: ValidateRequest
     ): Response<ResponseModel>
 
     // ── Profil ────────────────────────────────────────────────────────────────
 
-    @PUT("profile/update")
+    @PUT("auth/profile")
     suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): Response<ProfileResponse>
+
+    @PUT("auth/password")
+    suspend fun updatePassword(
         @Header("Authorization") token: String,
         @Body body: Map<String, String>
     ): Response<ResponseModel>
 
-    @PUT("profile/password")
-    suspend fun updatePassword(
+    // ── Notifications ─────────────────────────────────────────────────────────
+
+    @GET("notifications")
+    suspend fun getNotifications(
+        @Header("Authorization") token: String
+    ): List<Notification>
+
+    @PUT("notifications/read-all")
+    suspend fun markAllNotificationsAsRead(
+        @Header("Authorization") token: String
+    ): Response<ResponseModel>
+
+    @PUT("notifications/{id}/read")
+    suspend fun markNotificationAsRead(
         @Header("Authorization") token: String,
-        @Body body: Map<String, String>
+        @Path("id") id: Int
     ): Response<ResponseModel>
 }
