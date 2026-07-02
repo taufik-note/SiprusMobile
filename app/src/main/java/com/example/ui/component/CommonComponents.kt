@@ -29,10 +29,10 @@ fun FilterTriggerButton(
 ) {
     Surface(
         onClick = onClick,
-        color = if (isExpanded) Color(0xFFEEF2F6) else Color(0xFFF8FAFC),
-        shape = RoundedCornerShape(8.dp),
+        color = if (isExpanded) Color(0xFFF1F5F9) else Color.White,
+        shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, if (isExpanded) Color(0xFF4F46E5) else Color(0xFFE2E8F0)),
-        modifier = modifier.height(40.dp)
+        modifier = modifier.height(42.dp)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp),
@@ -128,8 +128,8 @@ fun StyledTextField(
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
         colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFFF8FAFC),
-            unfocusedContainerColor = Color(0xFFF8FAFC),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
             unfocusedBorderColor = Color(0xFFE2E8F0),
             focusedBorderColor = Color(0xFF4F46E5)
         )

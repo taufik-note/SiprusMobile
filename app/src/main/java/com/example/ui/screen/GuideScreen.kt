@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,31 +25,35 @@ fun GuideScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
             .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // Header
         Column {
-            Text("Pusat Bantuan", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1E293B))
-            Text("Panduan penggunaan sistem UniRoom.", fontSize = 12.sp, color = Color(0xFF64748B))
+            Text("Pusat Bantuan", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+            Text("Panduan penggunaan sistem UniRoom UNIMUS.", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
         }
 
-        // Tabs
-        Surface(color = Color(0xFFEEF2F6), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+        // Tabs WITH SHADOW
+        Surface(
+            color = Color(0xFFF1F5F9), 
+            shape = RoundedCornerShape(14.dp), 
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Row(modifier = Modifier.padding(4.dp)) {
-                GuideTabItem(text = "Alur", isSelected = activeInfoTab == 0, modifier = Modifier.weight(1f)) { activeInfoTab = 0 }
+                GuideTabItem(text = "Alur Kerja", isSelected = activeInfoTab == 0, modifier = Modifier.weight(1f)) { activeInfoTab = 0 }
                 GuideTabItem(text = "Aturan", isSelected = activeInfoTab == 1, modifier = Modifier.weight(1f)) { activeInfoTab = 1 }
                 GuideTabItem(text = "Kontak", isSelected = activeInfoTab == 2, modifier = Modifier.weight(1f)) { activeInfoTab = 2 }
             }
         }
 
-        // Content
+        // Content Card WITH SHADOW
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 when (activeInfoTab) {
@@ -69,54 +74,79 @@ fun GuideTabItem(text: String, isSelected: Boolean, modifier: Modifier, onClick:
         onClick = onClick,
         color = if (isSelected) Color.White else Color.Transparent,
         shape = RoundedCornerShape(10.dp),
-        modifier = modifier,
-        shadowElevation = if (isSelected) 2.dp else 0.dp
+        modifier = modifier.height(40.dp),
+        shadowElevation = 0.dp
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 10.dp)) {
-            Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B))
+        Box(contentAlignment = Alignment.Center) {
+            Text(text, fontSize = 12.sp, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFF0F172A) else Color(0xFF64748B))
         }
     }
 }
 
 @Composable
 fun AlurContent() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        GuideStep(num = "1", title = "Pilih & Ajukan", desc = "Cari ruangan yang tersedia dan isi detail kegiatan Anda.")
-        GuideStep(num = "2", title = "Verifikasi RT", desc = "Admin Rumah Tangga akan meninjau pengajuan Anda.")
-        GuideStep(num = "3", title = "Persetujuan Final", desc = "Kepala RT memberikan otorisasi akhir.")
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        GuideStep(num = "1", title = "Pilih & Ajukan", desc = "Temukan ruangan yang kosong melalui menu Cari, isi detail keperluan, lalu tekan tombol Ajukan.")
+        GuideStep(num = "2", title = "Verifikasi RT", desc = "Admin Rumah Tangga akan memvalidasi permohonan Anda. Pantau status di menu Riwayat.")
+        GuideStep(num = "3", title = "Otorisasi Final", desc = "Kepala RT memberikan persetujuan akhir. Setelah itu, ruangan siap digunakan sesuai jadwal.")
     }
 }
 
 @Composable
 fun AturanContent() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("• Jagalah kebersihan ruangan.", fontSize = 13.sp, color = Color(0xFF475569))
-        Text("• Gunakan sesuai jadwal yang disetujui.", fontSize = 13.sp, color = Color(0xFF475569))
-        Text("• Matikan AC dan lampu setelah selesai.", fontSize = 13.sp, color = Color(0xFF475569))
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        RuleItem("Dilarang membawa makanan/minuman berbau menyengat ke dalam ruangan.")
+        RuleItem("Wajib menjaga kebersihan dan kerapian kursi setelah pemakaian.")
+        RuleItem("Pastikan AC, lampu, dan proyektor telah dimatikan saat meninggalkan ruangan.")
+        RuleItem("Gunakan ruangan sesuai dengan durasi waktu yang telah disetujui.")
+    }
+}
+
+@Composable
+fun RuleItem(text: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(12.dp))
+        Text(text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
     }
 }
 
 @Composable
 fun KontakContent() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Biro Rumah Tangga UNIMUS", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-        Text("📞 Ext. 204 (GKB Rektorat)", fontSize = 13.sp, color = Color(0xFF475569))
-        Text("✉ bauk@unimus.ac.id", fontSize = 13.sp, color = Color(0xFF475569))
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("BIRO RUMAH TANGGA UNIMUS", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF0F172A))
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Phone, null, tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
+            Text("Ext. 204 (Lantai 2 GKB Rektorat)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        }
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Email, null, tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
+            Text("bauk@unimus.ac.id", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        }
     }
 }
 
 @Composable
 fun GuideStep(num: String, title: String, desc: String) {
     Row(verticalAlignment = Alignment.Top) {
-        Surface(color = Color(0xFF4F46E5), shape = RoundedCornerShape(8.dp), modifier = Modifier.size(24.dp)) {
+        Surface(
+            color = Color(0xFF4F46E5), 
+            shape = RoundedCornerShape(10.dp), 
+            modifier = Modifier.size(32.dp)
+        ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(num, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(num, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(16.dp))
         Column {
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF1E293B))
-            Text(desc, fontSize = 12.sp, color = Color(0xFF64748B))
+            Text(title, fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF0F172A))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(desc, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
         }
     }
 }

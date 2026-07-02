@@ -8,17 +8,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.Peminjaman
-import com.example.data.PeminjamanStatus
+import com.example.data.Notification
 import com.example.ui.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,26 +29,33 @@ fun NotificationScreen(
     viewModel: AppViewModel,
     onBack: () -> Unit
 ) {
-    val peminjamanList by viewModel.peminjamanList.collectAsState()
-    
-    // Reverse the list to show newest first
-    val notifications = peminjamanList.asReversed()
+    val notifications by viewModel.notifications.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Notifikasi", fontWeight = FontWeight.Bold) },
+                title = { Text("Pusat Notifikasi", fontWeight = FontWeight.Black, color = Color(0xFF0F172A)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                    }
+                },
+                actions = {
+                    if (notifications.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.markAllNotificationsRead() }) {
+                            Icon(Icons.Default.DoneAll, null, modifier = Modifier.size(18.dp), tint = Color(0xFF4F46E5))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Baca Semua", fontWeight = FontWeight.Black, fontSize = 12.sp, color = Color(0xFF4F46E5))
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
-                )
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = Color.Transparent
     ) { paddingValues ->
         if (notifications.isEmpty()) {
             Box(
@@ -57,13 +66,13 @@ fun NotificationScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        Icons.Default.Notifications,
+                        Icons.Default.NotificationsNone,
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(80.dp),
                         tint = Color(0xFFE2E8F0)
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text("Belum ada notifikasi", color = Color(0xFF64748B))
+                    Text("Belum ada pemberitahuan baru.", fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8))
                 }
             }
         } else {
@@ -71,11 +80,12 @@ fun NotificationScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
             ) {
                 items(notifications) { item ->
-                    NotificationItem(item)
+                    NotificationCard(item)
                 }
             }
         }
@@ -83,19 +93,14 @@ fun NotificationScreen(
 }
 
 @Composable
-fun NotificationItem(item: Peminjaman) {
-    val (statusColor, statusText) = when (item.status) {
-        PeminjamanStatus.MENUNGGU_RT -> Color(0xFFF59E0B) to "Sedang Menunggu Verifikasi RT"
-        PeminjamanStatus.MENUNGGU_KEPALA -> Color(0xFF3B82F6) to "Sedang Menunggu Verifikasi Kepala RT"
-        PeminjamanStatus.DISETUJUI -> Color(0xFF10B981) to "Peminjaman Anda telah DISETUJUI"
-        PeminjamanStatus.DITOLAK_RT, PeminjamanStatus.DITOLAK_KEPALA -> Color(0xFFEF4444) to "Peminjaman Anda DITOLAK"
-        PeminjamanStatus.BUTUH_REVISI -> Color(0xFF8B5CF6) to "Peminjaman Anda membutuhkan REVISI"
-    }
-
+fun NotificationCard(item: Notification) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = if (item.dibaca) Color.White else Color(0xFFEFF6FF)
+        ),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -104,15 +109,15 @@ fun NotificationItem(item: Peminjaman) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                color = statusColor.copy(alpha = 0.1f),
+                color = if (item.dibaca) Color(0xFFF1F5F9) else Color(0xFF4F46E5),
                 shape = CircleShape,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.Notifications,
                         contentDescription = null,
-                        tint = statusColor,
+                        tint = if (item.dibaca) Color(0xFF94A3B8) else Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -122,21 +127,27 @@ fun NotificationItem(item: Peminjaman) {
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.ruang?.nama ?: "Ruangan",
-                    fontSize = 14.sp,
+                    text = item.pesan,
+                    fontSize = 13.sp,
+                    fontWeight = if (item.dibaca) FontWeight.Medium else FontWeight.Black,
+                    color = if (item.dibaca) Color(0xFF475569) else Color(0xFF0F172A),
+                    lineHeight = 18.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = item.createdAt,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = Color(0xFF94A3B8)
                 )
-                Text(
-                    text = statusText,
-                    fontSize = 12.sp,
-                    color = Color(0xFF64748B)
-                )
-                Text(
-                    text = "${item.tanggal} • ${item.waktuMulai}",
-                    fontSize = 10.sp,
-                    color = Color(0xFF94A3B8),
-                    modifier = Modifier.padding(top = 4.dp)
+            }
+            
+            if (!item.dibaca) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(Color(0xFF4F46E5), CircleShape)
+                        .padding(start = 8.dp)
                 )
             }
         }

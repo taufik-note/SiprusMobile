@@ -383,7 +383,7 @@ fun MasterTabItem(text: String, isSelected: Boolean, modifier: Modifier, onClick
         color = if (isSelected) Color.White else Color.Transparent,
         shape = RoundedCornerShape(10.dp),
         modifier = modifier,
-        shadowElevation = if (isSelected) 2.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 8.dp)) {
             Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B))
@@ -397,7 +397,7 @@ fun MasterItemCard(title: String, subtitle: String, code: String, onDelete: () -
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {

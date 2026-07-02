@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -101,55 +102,61 @@ fun BookingScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(scrollState)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column {
-                Text(text = "Pencarian Ruangan", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1E293B))
-                Text(text = if (isGuest) "Lihat daftar ruangan UNIMUS." else "Temukan dan reservasi ruangan UNIMUS.", fontSize = 11.sp, color = Color(0xFF64748B))
+                Text(text = "Pencarian Ruangan", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                Text(text = if (isGuest) "Lihat daftar ruangan UNIMUS." else "Temukan dan reservasi ruangan UNIMUS.", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
             }
 
-            // TAB SELECTOR
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF1F5F9), RoundedCornerShape(12.dp))
-                    .padding(4.dp)
+            // TAB SELECTOR WITH SHADOW
+            Surface(
+                color = Color(0xFFF1F5F9),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(14.dp))
             ) {
-                TabButton(
-                    label = "Daftar",
-                    isSelected = activeTab == "list",
-                    icon = Icons.Default.List,
-                    modifier = Modifier.weight(1f)
-                ) { activeTab = "list" }
-                
-                TabButton(
-                    label = "Sepekan",
-                    isSelected = activeTab == "weekly",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f)
-                ) { 
-                    activeTab = "weekly" 
-                    viewModel.fetchWeeklyAvailability(
-                        selectedTanggal, selectedJamMulai, selectedJamSelesai, 
-                        selectedGedungId?.toString(), if(minKapasitasFilter > 1) minKapasitasFilter.toString() else null
-                    )
+                Row(modifier = Modifier.padding(4.dp)) {
+                    TabButton(
+                        label = "Daftar",
+                        isSelected = activeTab == "list",
+                        icon = Icons.Default.List,
+                        modifier = Modifier.weight(1f)
+                    ) { activeTab = "list" }
+                    
+                    TabButton(
+                        label = "Sepekan",
+                        isSelected = activeTab == "weekly",
+                        icon = Icons.Default.DateRange,
+                        modifier = Modifier.weight(1f)
+                    ) { 
+                        activeTab = "weekly" 
+                        viewModel.fetchWeeklyAvailability(
+                            selectedTanggal, selectedJamMulai, selectedJamSelesai, 
+                            selectedGedungId?.toString(), if(minKapasitasFilter > 1) minKapasitasFilter.toString() else null
+                        )
+                    }
                 }
             }
 
             if (activeTab == "list") {
-                // Jadwal & Lokasi Card
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("📅 JADWAL & LOKASI", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4F46E5))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Jadwal & Lokasi Card WITH ELEVATION SHADOW
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("📅 JADWAL & LOKASI", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF4F46E5))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             FilterTriggerButton(label = selectedTanggal, selected = "", isExpanded = showDatePicker, modifier = Modifier.weight(1f)) { showDatePicker = true }
                             FilterTriggerButton(label = selectedJamMulai, selected = "", isExpanded = showTimePickerMulai, modifier = Modifier.weight(0.7f)) { showTimePickerMulai = true }
                             FilterTriggerButton(label = selectedJamSelesai, selected = "", isExpanded = showTimePickerSelesai, modifier = Modifier.weight(0.7f)) { showTimePickerSelesai = true }
@@ -158,36 +165,41 @@ fun BookingScreen(
                         Box(modifier = Modifier.fillMaxWidth()) {
                             FilterTriggerButton(label = if (selectedGedungId == null) "SEMUA GEDUNG" else selectedGedung?.nama?.uppercase() ?: "GEDUNG", selected = "", isExpanded = showGedungDropdown, modifier = Modifier.fillMaxWidth()) { showGedungDropdown = !showGedungDropdown }
                             DropdownMenu(expanded = showGedungDropdown, onDismissRequest = { showGedungDropdown = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
-                                DropdownMenuItem(text = { Text("Semua Gedung") }, onClick = { selectedGedungId = null; showGedungDropdown = false })
-                                gedungList.forEach { g -> DropdownMenuItem(text = { Text(g.nama) }, onClick = { selectedGedungId = g.id; showGedungDropdown = false }) }
+                                DropdownMenuItem(text = { Text("Semua Gedung", fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = null; showGedungDropdown = false })
+                                gedungList.forEach { g -> DropdownMenuItem(text = { Text(g.nama, fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = g.id; showGedungDropdown = false }) }
                             }
                         }
                     }
                 }
 
-                // Filter Section
+                // Filter Section WITH SHADOW
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(onClick = { isFilterExpanded = !isFilterExpanded }, color = Color(0xFFF1F5F9), shape = RoundedCornerShape(10.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Surface(
+                        onClick = { isFilterExpanded = !isFilterExpanded },
+                        color = Color.White,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp))
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Tune, null, tint = Color(0xFF6366F1), modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("SARING HASIL PENCARIAN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                                Icon(Icons.Default.Tune, null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Text("SARING HASIL PENCARIAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
                             }
-                            Icon(imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color(0xFF64748B))
+                            Icon(imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color(0xFF1E293B))
                         }
                     }
                     AnimatedVisibility(visible = isFilterExpanded, enter = expandVertically(), exit = shrinkVertically()) {
-                        Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedTextField(value = searchKeyword, onValueChange = { searchKeyword = it }, placeholder = { Text("Cari nama kelas, jenis, fasilitas...", fontSize = 12.sp) }, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth().height(48.dp), leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp)) }, singleLine = true, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4F46E5), focusedContainerColor = Color(0xFFF8FAFC), unfocusedContainerColor = Color(0xFFF8FAFC)))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(16.dp)).background(Color.White, RoundedCornerShape(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedTextField(value = searchKeyword, onValueChange = { searchKeyword = it }, placeholder = { Text("Cari nama kelas, jenis, fasilitas...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().height(52.dp), leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp), tint = Color.Black) }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4F46E5), focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, cursorColor = Color.Black))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 FilterTriggerButton(label = "LANTAI", selected = "", isExpanded = showLantaiDropdown, modifier = Modifier.weight(1f)) { showLantaiDropdown = !showLantaiDropdown; showTipeDropdown = false }
                                 FilterTriggerButton(label = "TIPE", selected = "", isExpanded = showTipeDropdown, modifier = Modifier.weight(1f)) { showTipeDropdown = !showTipeDropdown; showLantaiDropdown = false }
-                                Surface(onClick = { minKapasitasFilter = if (minKapasitasFilter == 30) 1 else 30 }, color = if (minKapasitasFilter >= 30) Color(0xFFFFF7ED) else Color(0xFFF1F5F9), shape = RoundedCornerShape(10.dp), modifier = Modifier.height(40.dp)) {
-                                    Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.LocalFireDepartment, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("≥ 30", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Surface(onClick = { minKapasitasFilter = if (minKapasitasFilter == 30) 1 else 30 }, color = if (minKapasitasFilter >= 30) Color(0xFFFFF7ED) else Color.White, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(44.dp).shadow(1.dp, RoundedCornerShape(12.dp))) {
+                                    Row(Modifier.padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.LocalFireDepartment, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("≥ 30", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
                                     }
                                 }
                             }
@@ -198,19 +210,24 @@ fun BookingScreen(
                 }
 
                 if (!isGuest) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.FactCheck, null, tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("DETAIL KEPERLUAN", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                                Icon(Icons.Default.FactCheck, null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("DETAIL KEPERLUAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
                             }
-                            OutlinedTextField(value = keperluanText, onValueChange = { keperluanText = it }, placeholder = { Text("Tulis rincian di sini...", fontSize = 12.sp) }, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFF8FAFC), unfocusedContainerColor = Color(0xFFF8FAFC), focusedBorderColor = Color(0xFF10B981)))
+                            OutlinedTextField(value = keperluanText, onValueChange = { keperluanText = it }, placeholder = { Text("Tulis rincian di sini...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth(), textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF10B981), cursorColor = Color.Black))
                         }
                     }
                 }
 
-                Text("Hasil Pencarian (${filteredRuangan.size})", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Hasil Pencarian (${filteredRuangan.size})", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
                 filteredRuangan.forEach { room ->
                     RoomSelectionCard(
                         room = room,
@@ -229,7 +246,7 @@ fun BookingScreen(
                     )
                 }
             } else {
-                // WEEKLY VIEW
+                // WEEKLY VIEW WITH SHADOW
                 if (isLoadingWeekly) {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Color(0xFF4F46E5))
@@ -251,9 +268,9 @@ fun BookingScreen(
     }
 
     // DIALOGS & PICKERS
-    if (showSuccessDialog) { AlertDialog(onDismissRequest = { showSuccessDialog = false; onNavigateToHistory() }, title = { Text("Sukses") }, text = { Text(successDialogMessage) }, confirmButton = { Button(onClick = { showSuccessDialog = false; onNavigateToHistory() }) { Text("Lihat Riwayat") } }) }
-    if (showErrorDialog) { AlertDialog(onDismissRequest = { showErrorDialog = false }, title = { Text("Login Diperlukan") }, text = { Text("Silakan login sebagai Mahasiswa untuk melakukan reservasi.") }, confirmButton = { Button(onClick = { showErrorDialog = false }) { Text("Mengerti") } }) }
-    if (showDatePicker) { DatePickerDialog(onDismissRequest = { showDatePicker = false }, confirmButton = { TextButton(onClick = { datePickerState.selectedDateMillis?.let { millis -> val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()); selectedTanggal = formatter.format(Date(millis)) }; showDatePicker = false }) { Text("Set") } }, dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }) { DatePicker(state = datePickerState) } }
+    if (showSuccessDialog) { AlertDialog(onDismissRequest = { showSuccessDialog = false; onNavigateToHistory() }, title = { Text("Sukses", fontWeight = FontWeight.Bold) }, text = { Text(successDialogMessage, color = Color.Black) }, confirmButton = { Button(onClick = { showSuccessDialog = false; onNavigateToHistory() }) { Text("Lihat Riwayat") } }) }
+    if (showErrorDialog) { AlertDialog(onDismissRequest = { showErrorDialog = false }, title = { Text("Login Diperlukan", fontWeight = FontWeight.Bold) }, text = { Text("Silakan login sebagai Mahasiswa untuk melakukan reservasi.", color = Color.Black) }, confirmButton = { Button(onClick = { showErrorDialog = false }) { Text("Mengerti") } }) }
+    if (showDatePicker) { DatePickerDialog(onDismissRequest = { showDatePicker = false }, confirmButton = { TextButton(onClick = { datePickerState.selectedDateMillis?.let { millis -> val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()); selectedTanggal = formatter.format(Date(millis)) }; showDatePicker = false }) { Text("Set", fontWeight = FontWeight.Bold) } }, dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }) { DatePicker(state = datePickerState) } }
     if (showTimePickerMulai) { WheelTimePickerDialog(title = "Pilih Jam Mulai", initialTime = selectedJamMulai, onDismiss = { showTimePickerMulai = false }, onConfirm = { time -> selectedJamMulai = time; showTimePickerMulai = false }) }
     if (showTimePickerSelesai) { WheelTimePickerDialog(title = "Pilih Jam Selesai", initialTime = selectedJamSelesai, onDismiss = { showTimePickerSelesai = false }, onConfirm = { time -> selectedJamSelesai = time; showTimePickerSelesai = false }) }
 }
@@ -264,13 +281,13 @@ fun TabButton(label: String, isSelected: Boolean, icon: ImageVector, modifier: M
         onClick = onClick,
         color = if (isSelected) Color.White else Color.Transparent,
         shape = RoundedCornerShape(10.dp),
-        shadowElevation = if (isSelected) 2.dp else 0.dp,
+        shadowElevation = if (isSelected) 1.dp else 0.dp,
         modifier = modifier.height(40.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Icon(icon, null, tint = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B), modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color(0xFF1E293B) else Color(0xFF64748B))
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Black, color = if (isSelected) Color(0xFF0F172A) else Color(0xFF64748B))
         }
     }
 }
@@ -287,19 +304,20 @@ fun WeeklyAvailabilityTable(
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
             // Header
-            Row(modifier = Modifier.background(Color(0xFFF8FAFC)).padding(vertical = 12.dp)) {
-                Box(modifier = Modifier.width(120.dp).padding(start = 16.dp)) {
-                    Text("RUANGAN", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF64748B))
+            Row(modifier = Modifier.background(Color(0xFFF8FAFC)).padding(vertical = 14.dp)) {
+                Box(modifier = Modifier.width(130.dp).padding(start = 16.dp)) {
+                    Text("RUANGAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
                 }
                 dates.forEach { date ->
-                    Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.width(110.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(formatDayIndo(date), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                            Text(date.substring(5), fontSize = 9.sp, color = Color(0xFF64748B))
+                            Text(formatDayIndo(date).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                            Text(date.substring(5), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
                         }
                     }
                 }
@@ -308,33 +326,34 @@ fun WeeklyAvailabilityTable(
             // Body
             rooms.forEach { room ->
                 HorizontalDivider(color = Color(0xFFF1F5F9))
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-                    Column(modifier = Modifier.width(120.dp).padding(start = 16.dp)) {
-                        Text(room.kode, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4F46E5))
-                        Text(room.nama, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1E293B), maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 10.dp)) {
+                    Column(modifier = Modifier.width(130.dp).padding(start = 16.dp)) {
+                        Text(room.kode, fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF4F46E5))
+                        Text(room.nama, fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.Black, maxLines = 1)
                     }
                     
                     dates.forEach { date ->
                         val isAvailable = availability[date]?.any { it.id == room.id } ?: false
-                        Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.width(110.dp), contentAlignment = Alignment.Center) {
                             if (isAvailable) {
                                 Surface(
                                     onClick = { onCellClick(date, room) },
                                     color = Color(0xFFECFDF5),
-                                    shape = RoundedCornerShape(8.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.2f))
+                                    shape = RoundedCornerShape(10.dp),
+                                    shadowElevation = 1.dp,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.3f))
                                 ) {
-                                    Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Check, null, tint = Color(0xFF10B981), modifier = Modifier.size(10.dp))
+                                    Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Check, null, tint = Color(0xFF059669), modifier = Modifier.size(12.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("TERSEDIA", fontSize = 9.sp, fontWeight = FontWeight.Black, color = Color(0xFF065F46))
+                                        Text("TERSEDIA", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF065F46))
                                     }
                                 }
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Close, null, tint = Color(0xFFEF4444).copy(alpha = 0.3f), modifier = Modifier.size(10.dp))
+                                    Icon(Icons.Default.Close, null, tint = Color(0xFFEF4444).copy(alpha = 0.5f), modifier = Modifier.size(12.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("PENUH", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444).copy(alpha = 0.5f))
+                                    Text("PENUH", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFFEF4444))
                                 }
                             }
                         }
@@ -376,18 +395,18 @@ fun WheelTimePickerDialog(title: String, initialTime: String, onDismiss: () -> U
     var manualHour by remember { mutableStateOf(String.format("%02d", initialHour)) }
     var manualMinute by remember { mutableStateOf(String.format("%02d", initialMinute)) }
     Dialog(onDismissRequest = onDismiss) {
-        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(bottom = 20.dp))
+                Text(title, fontWeight = FontWeight.Black, fontSize = 18.sp, color = Color.Black, modifier = Modifier.padding(bottom = 20.dp))
                 Row(modifier = Modifier.fillMaxWidth().height(160.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     WheelPicker(count = 24, startIndex = initialHour, onItemSelected = { it -> selectedHour = it; manualHour = String.format("%02d", it) }, modifier = Modifier.weight(1f))
-                    Text(":", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+                    Text(":", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.Black, modifier = Modifier.padding(horizontal = 8.dp))
                     WheelPicker(count = 60, startIndex = initialMinute, onItemSelected = { it -> selectedMinute = it; manualMinute = String.format("%02d", it) }, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Batal") }
-                    Button(onClick = { val h = manualHour.toIntOrNull()?.coerceIn(0, 23) ?: selectedHour; val m = manualMinute.toIntOrNull()?.coerceIn(0, 59) ?: selectedMinute; onConfirm(String.format("%02d:%02d", h, m)) }, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))) { Text("Simpan") }
+                    TextButton(onClick = onDismiss) { Text("Batal", fontWeight = FontWeight.Bold, color = Color.Gray) }
+                    Button(onClick = { val h = manualHour.toIntOrNull()?.coerceIn(0, 23) ?: selectedHour; val m = manualMinute.toIntOrNull()?.coerceIn(0, 59) ?: selectedMinute; onConfirm(String.format("%02d:%02d", h, m)) }, shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))) { Text("Simpan", fontWeight = FontWeight.Black) }
                 }
             }
         }
@@ -397,20 +416,20 @@ fun WheelTimePickerDialog(title: String, initialTime: String, onDismiss: () -> U
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WheelPicker(count: Int, startIndex: Int, onItemSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
-    val itemHeight = 40.dp
+    val itemHeight = 44.dp
     val totalItems = 10000
     val centerIndex = totalItems / 2 - (totalItems / 2 % count) + startIndex
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = centerIndex - 1)
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     LaunchedEffect(listState.isScrollInProgress) { if (!listState.isScrollInProgress) { val selectedIndex = listState.firstVisibleItemIndex + 1; onItemSelected(selectedIndex % count) } }
     Box(modifier = modifier.height(itemHeight * 3), contentAlignment = Alignment.Center) {
-        Surface(modifier = Modifier.fillMaxWidth().height(itemHeight), color = Color(0xFFF1F5F9), shape = RoundedCornerShape(8.dp)) {}
+        Surface(modifier = Modifier.fillMaxWidth().height(itemHeight), color = Color(0xFFF1F5F9), shape = RoundedCornerShape(10.dp)) {}
         LazyColumn(state = listState, flingBehavior = snapFlingBehavior, modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             items(totalItems) { index ->
                 val actualIndex = index % count
                 Box(modifier = Modifier.fillMaxWidth().height(itemHeight), contentAlignment = Alignment.Center) {
                     val isSelected = listState.firstVisibleItemIndex + 1 == index
-                    Text(text = String.format("%02d", actualIndex), fontSize = if (isSelected) 20.sp else 16.sp, fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal, color = if (isSelected) Color(0xFF4F46E5) else Color.LightGray)
+                    Text(text = String.format("%02d", actualIndex), fontSize = if (isSelected) 22.sp else 18.sp, fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold, color = if (isSelected) Color(0xFF4F46E5) else Color.DarkGray)
                 }
             }
         }
@@ -419,29 +438,46 @@ fun WheelPicker(count: Int, startIndex: Int, onItemSelected: (Int) -> Unit, modi
 
 @Composable
 fun RoomSelectionCard(room: Ruangan, gedungName: String, isGuest: Boolean, onBookClick: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text(room.kode, color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                    Text(room.nama, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text(gedungName, fontSize = 11.sp, color = Color.Gray)
+                    Text(room.kode, color = Color(0xFF4F46E5), fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                    Text(room.nama, fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                    Text(gedungName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                 }
-                Surface(color = Color(0xFFF0FDFA), shape = RoundedCornerShape(8.dp)) {
-                    Text("Lt ${room.lantai}", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 9.sp, color = Color(0xFF0D9488))
+                Surface(color = Color(0xFFF0FDFA), shape = RoundedCornerShape(10.dp)) {
+                    Text("LT ${room.lantai}", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color(0xFF0D9488))
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Row {
-                Icon(Icons.Default.People, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(14.dp))
-                Text(" Kap: ${room.kapasitas}", fontSize = 11.sp)
-                Spacer(Modifier.width(12.dp))
-                Icon(Icons.Default.Category, null, tint = Color(0xFF6366F1), modifier = Modifier.size(14.dp))
-                Text(" ${room.jenis}", fontSize = 11.sp)
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.People, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Kapasitas: ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text("${room.kapasitas} Orang", fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                Spacer(Modifier.width(16.dp))
+                Icon(Icons.Default.Category, null, tint = Color(0xFF6366F1), modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(room.jenis, fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.Black)
             }
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = onBookClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isGuest) Color.Gray else Color(0xFF4F46E5))) {
-                Text(if (isGuest) "Login untuk Meminjam" else "Ajukan Reservasi", fontSize = 12.sp)
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = onBookClick,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isGuest) Color.DarkGray else Color(0xFF4F46E5),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(if (isGuest) "LOGIN UNTUK MEMINJAM" else "AJUKAN RESERVASI SEKARANG", fontSize = 13.sp, fontWeight = FontWeight.Black)
             }
         }
     }
