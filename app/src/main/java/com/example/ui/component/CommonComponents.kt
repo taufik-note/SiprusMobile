@@ -127,7 +127,10 @@ fun StyledTextField(
         minLines = minLines,
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
+        textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
         colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             unfocusedBorderColor = Color(0xFFE2E8F0),

@@ -36,8 +36,11 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val apiStatus by viewModel.apiStatusMessage.collectAsState()
-    var email by remember { mutableStateOf("taufik@unimus.ac.id") }
-    var password by remember { mutableStateOf("123") }
+    
+    var email by remember { mutableStateOf(viewModel.getRememberedEmail().ifBlank { "taufik@unimus.ac.id" }) }
+    var password by remember { mutableStateOf(viewModel.getRememberedPassword().ifBlank { "123" }) }
+    var rememberMe by remember { mutableStateOf(viewModel.isRememberMeChecked()) }
+
     val scrollState = rememberScrollState()
 
     // Status Indicator
@@ -190,9 +193,12 @@ fun LoginScreen(
                             .testTag("username_input"),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF3B82F6),
-                            unfocusedBorderColor = Color(0xFFE2E8F0)
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedLabelColor = Color(0xFF3B82F6),
+                            unfocusedLabelColor = Color(0xFF64748B)
                         )
                     )
 
@@ -209,11 +215,36 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF3B82F6),
-                            unfocusedBorderColor = Color(0xFFE2E8F0)
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedLabelColor = Color(0xFF3B82F6),
+                            unfocusedLabelColor = Color(0xFF64748B)
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Remember Me Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { rememberMe = !rememberMe },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it },
+                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF3B82F6))
+                        )
+                        Text(
+                            text = "Ingat Saya",
+                            fontSize = 14.sp,
+                            color = Color(0xFF1E293B),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -223,6 +254,7 @@ fun LoginScreen(
                             if (email.isNotEmpty()) {
                                 viewModel.login(email, password) { success, message ->
                                     if (success) {
+                                        viewModel.saveRememberedCredentials(email, password, rememberMe)
                                         onLoginSuccess()
                                     } else {
                                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -276,52 +308,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Demo Accounts Section corresponding to the 3 roles screenshot helpers
-            Text(
-                text = "Klik Akun Demo untuk Uji Coba Cepat:",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF94A3B8),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
-            )
-
-            // Mahasiswa Quick Accent Card
-            DemoRoleCard(
-                title = "Mahasiswa (Taufik / Zulham)",
-                email = "taufik@unimus.ac.id",
-                iconColor = Color(0xFF3B82F6),
-                bgColor = Color(0xFFEFF6FF).copy(alpha = 0.9f)
-            ) {
-                viewModel.loginWithDemo(Role.MAHASISWA) { onLoginSuccess() }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Admin RT Quick Accent Card
-            DemoRoleCard(
-                title = "Admin Rumah Tangga (Iqbal)",
-                email = "iqbal@unimus.ac.id",
-                iconColor = Color(0xFFF59E0B),
-                bgColor = Color(0xFFFEF3C7).copy(alpha = 0.9f)
-            ) {
-                viewModel.loginWithDemo(Role.ADMIN_RT) { onLoginSuccess() }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Siprus Quick Accent Card
-            DemoRoleCard(
-                title = "Siprus / Kepala RT (Avril)",
-                email = "avril@unimus.ac.id",
-                iconColor = Color(0xFF8B5CF6),
-                bgColor = Color(0xFFF5F3FF).copy(alpha = 0.9f)
-            ) {
-                viewModel.loginWithDemo(Role.KEPALA_RT) { onLoginSuccess() }
-            }
+            Spacer(modifier = Modifier.height(20.dp))
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -337,51 +324,4 @@ fun LoginScreen(
     }
 }
 
-@Composable
-fun DemoRoleCard(
-    title: String,
-    email: String,
-    iconColor: Color,
-    bgColor: Color,
-    onClick: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
-                Text(
-                    text = email,
-                    fontSize = 11.sp,
-                    color = Color(0xFF475569)
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFF64748B)
-            )
-        }
-    }
-}
+

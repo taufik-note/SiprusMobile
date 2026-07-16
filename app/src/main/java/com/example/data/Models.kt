@@ -109,6 +109,9 @@ data class Peminjaman(
     @SerializedName("createdAt")
     val createdAt: String? = null,
 
+    @SerializedName("updatedAt")
+    val updatedAt: String? = null,
+
     // Relasi — dikirim backend jika query include user & ruang
     @SerializedName("user")
     val user: User? = null,
@@ -199,6 +202,11 @@ data class BookingRequest(
 
 data class ValidateRequest(
     @SerializedName("action") val action: String,
+    @SerializedName("alasan") val alasan: String
+)
+
+data class SwitchRoomRequest(
+    @SerializedName("newRuangId") val newRuangId: Int,
     @SerializedName("alasan") val alasan: String
 )
 

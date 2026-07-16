@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,11 +47,15 @@ fun BookingScreen(
     val currentUser by viewModel.currentUser.collectAsState()
     val gedungList by viewModel.gedungList.collectAsState()
     val ruanganList by viewModel.ruanganList.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var selectedTanggal by remember { mutableStateOf("2026-06-01") }
+    val sdfISO = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val currentDayISO = remember { sdfISO.format(Date()) }
+
+    var selectedTanggal by remember { mutableStateOf(currentDayISO) }
     var selectedJamMulai by remember { mutableStateOf("08:00") }
     var selectedJamSelesai by remember { mutableStateOf("10:00") }
     var selectedGedungId by remember { mutableStateOf<Int?>(null) }
@@ -77,7 +82,20 @@ fun BookingScreen(
 
     // Date Picker State
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                // Hanya izinkan hari ini dan masa depan
+                val today = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                return utcTimeMillis >= today.timeInMillis
+            }
+        }
+    )
     
     var showTimePickerMulai by remember { mutableStateOf(false) }
     var showTimePickerSelesai by remember { mutableStateOf(false) }
@@ -104,166 +122,188 @@ fun BookingScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Transparent
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = { viewModel.refreshDataFromServer() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            Column {
-                Text(text = "Pencarian Ruangan", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-                Text(text = if (isGuest) "Lihat daftar ruangan UNIMUS." else "Temukan dan reservasi ruangan UNIMUS.", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
-            }
-
-            // TAB SELECTOR WITH SHADOW
-            Surface(
-                color = Color(0xFFF1F5F9),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(14.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(modifier = Modifier.padding(4.dp)) {
-                    TabButton(
-                        label = "Daftar",
-                        isSelected = activeTab == "list",
-                        icon = Icons.Default.List,
-                        modifier = Modifier.weight(1f)
-                    ) { activeTab = "list" }
-                    
-                    TabButton(
-                        label = "Sepekan",
-                        isSelected = activeTab == "weekly",
-                        icon = Icons.Default.DateRange,
-                        modifier = Modifier.weight(1f)
-                    ) { 
-                        activeTab = "weekly" 
-                        viewModel.fetchWeeklyAvailability(
-                            selectedTanggal, selectedJamMulai, selectedJamSelesai, 
-                            selectedGedungId?.toString(), if(minKapasitasFilter > 1) minKapasitasFilter.toString() else null
-                        )
-                    }
+                Column {
+                    Text(text = "Pencarian Ruangan", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                    Text(text = if (isGuest) "Lihat daftar ruangan UNIMUS." else "Temukan dan reservasi ruangan UNIMUS.", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
                 }
-            }
 
-            if (activeTab == "list") {
-                // Jadwal & Lokasi Card WITH ELEVATION SHADOW
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    modifier = Modifier.fillMaxWidth()
+                // TAB SELECTOR WITH SHADOW
+                Surface(
+                    color = Color(0xFFF1F5F9),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(14.dp))
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("📅 JADWAL & LOKASI", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF4F46E5))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            FilterTriggerButton(label = selectedTanggal, selected = "", isExpanded = showDatePicker, modifier = Modifier.weight(1f)) { showDatePicker = true }
-                            FilterTriggerButton(label = selectedJamMulai, selected = "", isExpanded = showTimePickerMulai, modifier = Modifier.weight(0.7f)) { showTimePickerMulai = true }
-                            FilterTriggerButton(label = selectedJamSelesai, selected = "", isExpanded = showTimePickerSelesai, modifier = Modifier.weight(0.7f)) { showTimePickerSelesai = true }
-                        }
-                        var showGedungDropdown by remember { mutableStateOf(false) }
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            FilterTriggerButton(label = if (selectedGedungId == null) "SEMUA GEDUNG" else selectedGedung?.nama?.uppercase() ?: "GEDUNG", selected = "", isExpanded = showGedungDropdown, modifier = Modifier.fillMaxWidth()) { showGedungDropdown = !showGedungDropdown }
-                            DropdownMenu(expanded = showGedungDropdown, onDismissRequest = { showGedungDropdown = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
-                                DropdownMenuItem(text = { Text("Semua Gedung", fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = null; showGedungDropdown = false })
-                                gedungList.forEach { g -> DropdownMenuItem(text = { Text(g.nama, fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = g.id; showGedungDropdown = false }) }
-                            }
-                        }
-                    }
-                }
-
-                // Filter Section WITH SHADOW
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(
-                        onClick = { isFilterExpanded = !isFilterExpanded },
-                        color = Color.White,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp))
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Tune, null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(10.dp))
-                                Text("SARING HASIL PENCARIAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
-                            }
-                            Icon(imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color(0xFF1E293B))
-                        }
-                    }
-                    AnimatedVisibility(visible = isFilterExpanded, enter = expandVertically(), exit = shrinkVertically()) {
-                        Column(modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(16.dp)).background(Color.White, RoundedCornerShape(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedTextField(value = searchKeyword, onValueChange = { searchKeyword = it }, placeholder = { Text("Cari nama kelas, jenis, fasilitas...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().height(52.dp), leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp), tint = Color.Black) }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4F46E5), focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, cursorColor = Color.Black))
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                FilterTriggerButton(label = "LANTAI", selected = "", isExpanded = showLantaiDropdown, modifier = Modifier.weight(1f)) { showLantaiDropdown = !showLantaiDropdown; showTipeDropdown = false }
-                                FilterTriggerButton(label = "TIPE", selected = "", isExpanded = showTipeDropdown, modifier = Modifier.weight(1f)) { showTipeDropdown = !showTipeDropdown; showLantaiDropdown = false }
-                                Surface(onClick = { minKapasitasFilter = if (minKapasitasFilter == 30) 1 else 30 }, color = if (minKapasitasFilter >= 30) Color(0xFFFFF7ED) else Color.White, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(44.dp).shadow(1.dp, RoundedCornerShape(12.dp))) {
-                                    Row(Modifier.padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.LocalFireDepartment, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("≥ 30", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
-                                    }
-                                }
-                            }
-                            AnimatedVisibility(visible = showLantaiDropdown) { HorizontalOptionList(options = listOf("Semua", "0", "1", "2"), selected = selectedLantaiFilter.replace("Lt ", ""), onSelected = { selectedLantaiFilter = if(it == "Semua") "Semua" else "Lt $it"; showLantaiDropdown = false }) }
-                            AnimatedVisibility(visible = showTipeDropdown) { HorizontalOptionList(options = listOf("Semua", "Kelas", "Lab", "Rapat", "Aula"), selected = selectedTipeTipe, onSelected = { selectedTipeTipe = it; showTipeDropdown = false }) }
+                    Row(modifier = Modifier.padding(4.dp)) {
+                        TabButton(
+                            label = "Daftar",
+                            isSelected = activeTab == "list",
+                            icon = Icons.Default.List,
+                            modifier = Modifier.weight(1f)
+                        ) { activeTab = "list" }
+                        
+                        TabButton(
+                            label = "Sepekan",
+                            isSelected = activeTab == "weekly",
+                            icon = Icons.Default.DateRange,
+                            modifier = Modifier.weight(1f)
+                        ) { 
+                            activeTab = "weekly" 
+                            viewModel.fetchWeeklyAvailability(
+                                selectedTanggal, selectedJamMulai, selectedJamSelesai, 
+                                selectedGedungId?.toString(), if(minKapasitasFilter > 1) minKapasitasFilter.toString() else null
+                            )
                         }
                     }
                 }
 
-                if (!isGuest) {
+                if (activeTab == "list") {
+                    // Jadwal & Lokasi Card
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.FactCheck, null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("DETAIL KEPERLUAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("📅 JADWAL & LOKASI", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF4F46E5))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                FilterTriggerButton(label = selectedTanggal, selected = "", isExpanded = showDatePicker, modifier = Modifier.weight(1f)) { showDatePicker = true }
+                                FilterTriggerButton(label = selectedJamMulai, selected = "", isExpanded = showTimePickerMulai, modifier = Modifier.weight(0.7f)) { showTimePickerMulai = true }
+                                FilterTriggerButton(label = selectedJamSelesai, selected = "", isExpanded = showTimePickerSelesai, modifier = Modifier.weight(0.7f)) { showTimePickerSelesai = true }
                             }
-                            OutlinedTextField(value = keperluanText, onValueChange = { keperluanText = it }, placeholder = { Text("Tulis rincian di sini...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth(), textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF10B981), cursorColor = Color.Black))
-                        }
-                    }
-                }
-
-                Text("Hasil Pencarian (${filteredRuangan.size})", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-                filteredRuangan.forEach { room ->
-                    RoomSelectionCard(
-                        room = room,
-                        gedungName = gedungList.find { it.id == room.gedungId }?.nama ?: "Gedung",
-                        isGuest = isGuest,
-                        onBookClick = {
-                            if (isGuest) { showErrorDialog = true } 
-                            else if (keperluanText.isBlank()) { scope.launch { snackbarHostState.showSnackbar("Mohon isi rincian KEPERLUAN terlebih dahulu.") } } 
-                            else {
-                                viewModel.createBooking(room.id, selectedTanggal, selectedJamMulai, selectedJamSelesai, keperluanText) { success, msg ->
-                                    if (success) { successDialogMessage = msg; showSuccessDialog = true } 
-                                    else { scope.launch { snackbarHostState.showSnackbar("Gagal: $msg") } }
+                            var showGedungDropdown by remember { mutableStateOf(false) }
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                FilterTriggerButton(label = if (selectedGedungId == null) "SEMUA GEDUNG" else selectedGedung?.nama?.uppercase() ?: "GEDUNG", selected = "", isExpanded = showGedungDropdown, modifier = Modifier.fillMaxWidth()) { showGedungDropdown = !showGedungDropdown }
+                                DropdownMenu(expanded = showGedungDropdown, onDismissRequest = { showGedungDropdown = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
+                                    DropdownMenuItem(text = { Text("Semua Gedung", fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = null; showGedungDropdown = false })
+                                    gedungList.forEach { g -> DropdownMenuItem(text = { Text(g.nama, fontWeight = FontWeight.Bold, color = Color.Black) }, onClick = { selectedGedungId = g.id; showGedungDropdown = false }) }
                                 }
                             }
                         }
-                    )
-                }
-            } else {
-                // WEEKLY VIEW WITH SHADOW
-                if (isLoadingWeekly) {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF4F46E5))
+                    }
+
+                    // Filter Section
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(
+                            onClick = { isFilterExpanded = !isFilterExpanded },
+                            color = Color.White,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp))
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Tune, null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(10.dp))
+                                    Text("SARING HASIL PENCARIAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E293B))
+                                }
+                                Icon(imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color(0xFF1E293B))
+                            }
+                        }
+                        AnimatedVisibility(visible = isFilterExpanded, enter = expandVertically(), exit = shrinkVertically()) {
+                            Column(modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(16.dp)).background(Color.White, RoundedCornerShape(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                OutlinedTextField(value = searchKeyword, onValueChange = { searchKeyword = it }, placeholder = { Text("Cari nama kelas, jenis, fasilitas...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().height(52.dp), leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp), tint = Color.Black) }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4F46E5), focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, cursorColor = Color.Black))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    FilterTriggerButton(label = "LANTAI", selected = "", isExpanded = showLantaiDropdown, modifier = Modifier.weight(1f)) { showLantaiDropdown = !showLantaiDropdown; showTipeDropdown = false }
+                                    FilterTriggerButton(label = "TIPE", selected = "", isExpanded = showTipeDropdown, modifier = Modifier.weight(1f)) { showTipeDropdown = !showTipeDropdown; showLantaiDropdown = false }
+                                    Surface(onClick = { minKapasitasFilter = if (minKapasitasFilter == 30) 1 else 30 }, color = if (minKapasitasFilter >= 30) Color(0xFFFFF7ED) else Color.White, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(44.dp).shadow(1.dp, RoundedCornerShape(12.dp))) {
+                                        Row(Modifier.padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.LocalFireDepartment, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("≥ 30", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                                        }
+                                    }
+                                }
+                                AnimatedVisibility(visible = showLantaiDropdown) { HorizontalOptionList(options = listOf("Semua", "0", "1", "2"), selected = selectedLantaiFilter.replace("Lt ", ""), onSelected = { selectedLantaiFilter = if(it == "Semua") "Semua" else "Lt $it"; showLantaiDropdown = false }) }
+                                AnimatedVisibility(visible = showTipeDropdown) { HorizontalOptionList(options = listOf("Semua", "Kelas", "Lab", "Rapat", "Aula"), selected = selectedTipeTipe, onSelected = { selectedTipeTipe = it; showTipeDropdown = false }) }
+                            }
+                        }
+                    }
+
+                    if (!isGuest) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.FactCheck, null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("DETAIL KEPERLUAN", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                                }
+                                OutlinedTextField(value = keperluanText, onValueChange = { keperluanText = it }, placeholder = { Text("Tulis rincian di sini...", fontSize = 13.sp, color = Color.Gray) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth(), textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, color = Color.Black), colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF10B981), cursorColor = Color.Black))
+                            }
+                        }
+                    }
+
+                    Text("Hasil Pencarian (${filteredRuangan.size})", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                    filteredRuangan.forEach { room ->
+                        RoomSelectionCard(
+                            room = room,
+                            gedungName = gedungList.find { it.id == room.gedungId }?.nama ?: "Gedung",
+                            isGuest = isGuest,
+                            onBookClick = {
+                                if (isGuest) { showErrorDialog = true } 
+                                else if (keperluanText.isBlank()) { scope.launch { snackbarHostState.showSnackbar("Mohon isi rincian KEPERLUAN terlebih dahulu.") } } 
+                                else {
+                                    val now = Calendar.getInstance()
+                                    val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now.time)
+                                    val currentTimeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now.time)
+
+                                    if (selectedTanggal < todayStr) {
+                                        scope.launch { snackbarHostState.showSnackbar("Gagal: Tanggal yang dipilih sudah lewat.") }
+                                        return@RoomSelectionCard
+                                    }
+                                    if (selectedTanggal == todayStr && selectedJamMulai < currentTimeStr) {
+                                        scope.launch { snackbarHostState.showSnackbar("Gagal: Jam mulai sudah terlewat untuk hari ini.") }
+                                        return@RoomSelectionCard
+                                    }
+                                    if (selectedJamMulai >= selectedJamSelesai) {
+                                        scope.launch { snackbarHostState.showSnackbar("Gagal: Jam mulai harus lebih awal dari jam selesai.") }
+                                        return@RoomSelectionCard
+                                    }
+
+                                    viewModel.createBooking(room.id, selectedTanggal, selectedJamMulai, selectedJamSelesai, keperluanText) { success, msg ->
+                                        if (success) { successDialogMessage = msg; showSuccessDialog = true } 
+                                        else { scope.launch { snackbarHostState.showSnackbar("Gagal: $msg") } }
+                                    }
+                                }
+                            }
+                        )
                     }
                 } else {
-                    WeeklyAvailabilityTable(
-                        dates = getNext7Days(selectedTanggal),
-                        rooms = filteredRuangan,
-                        availability = weeklyAvailability,
-                        onCellClick = { date, room ->
-                            selectedTanggal = date
-                            activeTab = "list"
+                    if (isLoadingWeekly) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFF4F46E5))
                         }
-                    )
+                    } else {
+                        WeeklyAvailabilityTable(
+                            dates = getNext7Days(selectedTanggal),
+                            rooms = filteredRuangan,
+                            availability = weeklyAvailability,
+                            onCellClick = { date, room ->
+                                selectedTanggal = date
+                                activeTab = "list"
+                            }
+                        )
+                    }
                 }
+                Spacer(Modifier.height(40.dp))
             }
-            Spacer(Modifier.height(40.dp))
         }
     }
 

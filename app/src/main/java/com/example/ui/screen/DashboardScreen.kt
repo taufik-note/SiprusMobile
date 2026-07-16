@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import com.example.data.Peminjaman
 import com.example.data.PeminjamanStatus
 import com.example.data.Role
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: AppViewModel,
@@ -30,6 +32,7 @@ fun DashboardScreen(
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
     val peminjamanList by viewModel.peminjamanList.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val scrollState = rememberScrollState()
 
     val headerGradient = Brush.horizontalGradient(
@@ -44,97 +47,103 @@ fun DashboardScreen(
     }
     val approvedPeminjaman = peminjamanList.count { it.status == PeminjamanStatus.DISETUJUI }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AsyncImage(
-            model = "https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Muhammadiyah_Semarang.png",
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize().padding(32.dp),
-            alpha = 0.03f
-        )
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = { viewModel.refreshDataFromServer() },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = "https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Muhammadiyah_Semarang.png",
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                alpha = 0.03f
+            )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Box(modifier = Modifier.background(headerGradient).padding(24.dp)) {
-                    Column {
-                        Surface(
-                            color = Color.White.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(
-                                text = "${userRole.name} WORKSPACE",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Selamat Datang, ${currentUser?.name ?: "Guest"}!",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Kelola dan lacak ketersediaan ruangan kampus dalam satu genggaman.",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                        if (userRole == Role.MAHASISWA) {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            Button(
-                                onClick = onNavigateToBooking,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFBBF24)),
-                                shape = RoundedCornerShape(12.dp),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.background(headerGradient).padding(24.dp)) {
+                        Column {
+                            Surface(
+                                color = Color.White.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(6.dp)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E293B), modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("PINJAM RUANGAN", fontWeight = FontWeight.Black, color = Color(0xFF1E293B), fontSize = 12.sp)
+                                Text(
+                                    text = "${userRole.name} WORKSPACE",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Selamat Datang, ${currentUser?.name ?: "Guest"}!",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Kelola dan lacak ketersediaan ruangan kampus dalam satu genggaman.",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                            if (userRole == Role.MAHASISWA) {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Button(
+                                    onClick = onNavigateToBooking,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFBBF24)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E293B), modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("PINJAM RUANGAN", fontWeight = FontWeight.Black, color = Color(0xFF1E293B), fontSize = 12.sp)
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                MetricCard(Modifier.weight(1f), "TOTAL", totalPeminjaman.toString(), Icons.Default.Description, Color(0xFF3B82F6))
-                MetricCard(Modifier.weight(1f), "PENDING", pendingPeminjaman.toString(), Icons.Default.Pending, Color(0xFFF59E0B))
-                MetricCard(Modifier.weight(1f), "SETUJU", approvedPeminjaman.toString(), Icons.Default.CheckCircle, Color(0xFF10B981))
-            }
-
-            Text("⚡ Reservasi Terbaru", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF0F172A))
-
-            if (peminjamanList.isEmpty()) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text("Belum ada data reservasi saat ini.", color = Color(0xFF64748B), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    MetricCard(Modifier.weight(1f), "TOTAL", totalPeminjaman.toString(), Icons.Default.Description, Color(0xFF3B82F6))
+                    MetricCard(Modifier.weight(1f), "PENDING", pendingPeminjaman.toString(), Icons.Default.Pending, Color(0xFFF59E0B))
+                    MetricCard(Modifier.weight(1f), "SETUJU", approvedPeminjaman.toString(), Icons.Default.CheckCircle, Color(0xFF10B981))
+                }
+
+                Text("⚡ Reservasi Terbaru", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF0F172A))
+
+                if (peminjamanList.isEmpty()) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    ) {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            Text("Belum ada data reservasi saat ini.", color = Color(0xFF64748B), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                } else {
+                    peminjamanList.take(5).forEach { item ->
+                        BookingListItem(item = item)
                     }
                 }
-            } else {
-                peminjamanList.asReversed().take(5).forEach { item ->
-                    BookingListItem(item = item)
-                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

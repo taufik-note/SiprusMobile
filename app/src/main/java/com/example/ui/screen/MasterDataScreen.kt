@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,7 +55,7 @@ fun MasterDataScreen(
             }
 
             // Tab Switcher
-            Surface(color = Color(0xFFEEF2F6), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = Color(0xFFEEF2F6), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp))) {
                 Row(modifier = Modifier.padding(4.dp)) {
                     MasterTabItem(text = "Gedung", isSelected = activeTab == 0, modifier = Modifier.weight(1f)) { activeTab = 0 }
                     MasterTabItem(text = "Ruangan", isSelected = activeTab == 1, modifier = Modifier.weight(1f)) { activeTab = 1 }
@@ -62,16 +63,19 @@ fun MasterDataScreen(
             }
 
             // Action Button
-            Button(
-                onClick = { if (activeTab == 0) showAddGedungDialog = true else showAddRuanganDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
-            ) {
-                Icon(Icons.Default.Add, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Tambah ${if (activeTab == 0) "Gedung" else "Ruangan"}", fontWeight = FontWeight.Bold)
-            }
+        Button(
+            onClick = { if (activeTab == 0) showAddGedungDialog = true else showAddRuanganDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF4F46E5),
+                contentColor = Color.White
+            )
+        ) {
+            Icon(Icons.Default.Add, null, tint = Color.White)
+            Spacer(Modifier.width(8.dp))
+            Text("Tambah ${if (activeTab == 0) "Gedung" else "Ruangan"}", fontWeight = FontWeight.Bold, color = Color.White)
+        }
 
             // List Header
             Text(
@@ -383,7 +387,7 @@ fun MasterTabItem(text: String, isSelected: Boolean, modifier: Modifier, onClick
         color = if (isSelected) Color.White else Color.Transparent,
         shape = RoundedCornerShape(10.dp),
         modifier = modifier,
-        shadowElevation = 0.dp
+        shadowElevation = if (isSelected) 1.dp else 0.dp
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 8.dp)) {
             Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B))
@@ -397,7 +401,7 @@ fun MasterItemCard(title: String, subtitle: String, code: String, onDelete: () -
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {

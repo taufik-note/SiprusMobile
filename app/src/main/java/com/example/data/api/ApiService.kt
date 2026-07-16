@@ -26,7 +26,7 @@ interface ApiService {
 
     @GET("gedung")
     suspend fun getGedung(
-        @Header("Authorization") token: String   // endpoint butuh auth
+        @Header("Authorization") token: String? = null
     ): List<Gedung>
 
     @POST("gedung")
@@ -39,12 +39,12 @@ interface ApiService {
 
     @GET("ruang")
     suspend fun getRooms(
-        @Header("Authorization") token: String   // endpoint butuh auth
+        @Header("Authorization") token: String? = null
     ): List<Ruangan>
 
     @GET("ruang/available")
     suspend fun getAvailableRooms(
-        @Header("Authorization") token: String,
+        @Header("Authorization") token: String? = null,
         @Query("tanggal") tanggal: String,
         @Query("waktuMulai") waktuMulai: String,
         @Query("waktuSelesai") waktuSelesai: String,
@@ -62,12 +62,12 @@ interface ApiService {
 
     @GET("booking/history")
     suspend fun getMyHistory(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String? = null
     ): List<Peminjaman>
 
     @GET("booking/all")
     suspend fun getAllBookings(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String? = null
     ): List<Peminjaman>
 
     @POST("booking")
@@ -76,11 +76,18 @@ interface ApiService {
         @Body body: BookingRequest
     ): Response<ResponseModel>
 
-    @PATCH("booking/{id}/validate")
+    @PUT("booking/{id}/validate")
     suspend fun validateBooking(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
         @Body body: ValidateRequest
+    ): Response<ResponseModel>
+
+    @PUT("booking/{id}/transfer")
+    suspend fun switchRoom(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body body: com.example.data.SwitchRoomRequest
     ): Response<ResponseModel>
 
     // ── Profil ────────────────────────────────────────────────────────────────
@@ -101,7 +108,7 @@ interface ApiService {
 
     @GET("notifications")
     suspend fun getNotifications(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String? = null
     ): List<Notification>
 
     @PUT("notifications/read-all")

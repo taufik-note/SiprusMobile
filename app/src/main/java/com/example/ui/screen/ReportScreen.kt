@@ -40,8 +40,11 @@ fun ReportScreen(
     var searchQuery by remember { mutableStateOf("") }
     var statusFilter by remember { mutableStateOf("Semua Status") }
     var selectedGedungId by remember { mutableStateOf<Int?>(null) }
-    var startDate by remember { mutableStateOf("dd/mm/yyyy") }
-    var endDate by remember { mutableStateOf("dd/mm/yyyy") }
+    val sdfUI = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val currentDayUI = remember { sdfUI.format(Date()) }
+
+    var startDate by remember { mutableStateOf(currentDayUI) }
+    var endDate by remember { mutableStateOf(currentDayUI) }
 
     // Sub-Filter States
     var showGedungDropdown by remember { mutableStateOf(false) }
@@ -122,7 +125,7 @@ fun ReportScreen(
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -138,25 +141,31 @@ fun ReportScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF059669),
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(vertical = 10.dp)
                     ) {
-                        Icon(Icons.Default.TableChart, null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.TableChart, null, modifier = Modifier.size(16.dp), tint = Color.White)
                         Spacer(Modifier.width(8.dp))
-                        Text("Excel", fontSize = 12.sp)
+                        Text("Excel", fontSize = 12.sp, color = Color.White)
                     }
                     Button(
                         onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E293B),
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(vertical = 10.dp)
                     ) {
-                        Icon(Icons.Default.PictureAsPdf, null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.PictureAsPdf, null, modifier = Modifier.size(16.dp), tint = Color.White)
                         Spacer(Modifier.width(8.dp))
-                        Text("PDF", fontSize = 12.sp)
+                        Text("PDF", fontSize = 12.sp, color = Color.White)
                     }
                 }
             }
@@ -166,7 +175,7 @@ fun ReportScreen(
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -246,12 +255,19 @@ fun ReportScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari mahasiswa, ruangan, atau keperluan...", fontSize = 12.sp) },
+                    placeholder = { Text("Cari mahasiswa, ruangan, atau keperluan...", fontSize = 12.sp, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Default.Search, null, tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp)) },
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4F46E5), focusedContainerColor = Color.White, unfocusedContainerColor = Color.White)
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = Color(0xFF4F46E5), 
+                        focusedContainerColor = Color.White, 
+                        unfocusedContainerColor = Color.White
+                    )
                 )
 
                 OutlinedButton(
@@ -334,7 +350,7 @@ fun MobileReportCard(item: Peminjaman) {
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

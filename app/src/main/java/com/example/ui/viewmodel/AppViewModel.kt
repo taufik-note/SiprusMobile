@@ -7,6 +7,8 @@ import com.example.data.*
 import com.example.data.api.ApiService
 import com.example.utils.SessionManager
 import com.google.gson.Gson
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -135,6 +137,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         logMessage("Berhasil logout.")
     }
 
+    fun saveRememberedCredentials(email: String, password: String, remember: Boolean) {
+        sessionManager.saveCredentials(email, password, remember)
+    }
+
+    fun getRememberedEmail() = sessionManager.getRememberedEmail()
+    fun getRememberedPassword() = sessionManager.getRememberedPassword()
+    fun isRememberMeChecked() = sessionManager.isRememberMeChecked()
+
     fun login(email: String, password: String, onComplete: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -213,44 +223,52 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
      * tidak menghentikan endpoint lainnya.
      */
     fun refreshDataFromServer() {
-        val token = _currentUser.value?.token
-        if (token.isNullOrBlank() || token == "demo-token") {
-            // Belum login atau mode demo — tidak ada yang bisa dimuat
-            return
-        }
+        val currentUser = _currentUser.value
+        val token = currentUser?.token
+        
+        if (currentUser == null) return
 
         viewModelScope.launch {
             _isLoading.value = true
-            val auth = "Bearer $token"
+            
+            // Jika token adalah demo-token (Guest), kirim null agar header tidak dikirim ke backend
+            val auth = if (token != null && token != "demo-token") "Bearer $token" else null
 
-            // Semua endpoint butuh Authorization — kirim token ke setiap call
+            // 1. Ambil Gedung (Terpisah)
             try {
                 _gedungList.value = apiService.getGedung(auth)
             } catch (e: Exception) {
-                logMessage("Gagal memuat data gedung: ${friendlyError(e)}")
+                logMessage("Gagal memuat gedung: ${friendlyError(e)}")
             }
 
+            // 2. Ambil Ruangan (Terpisah)
             try {
-                val rooms = apiService.getRooms(auth)
-                _ruanganList.value = rooms
+                _ruanganList.value = apiService.getRooms(auth)
             } catch (e: Exception) {
-                logMessage("Gagal memuat data ruangan: ${friendlyError(e)}")
+                logMessage("Gagal memuat ruangan: ${friendlyError(e)}")
             }
 
-            try {
-                _peminjamanList.value = when (_currentUser.value?.role) {
-                    Role.MAHASISWA -> apiService.getMyHistory(auth)
-                    else           -> apiService.getAllBookings(auth)
+            // 3. Data Privat (Booking & Notif) - Hanya untuk yang punya token asli
+            if (auth != null) {
+                try {
+                    _peminjamanList.value = when (currentUser.role) {
+                        Role.MAHASISWA -> apiService.getMyHistory(auth)
+                        else           -> apiService.getAllBookings(auth)
+                    }
+                } catch (e: Exception) {
+                    logMessage("Gagal memuat peminjaman: ${friendlyError(e)}")
                 }
-            } catch (e: Exception) {
-                logMessage("Gagal memuat data peminjaman: ${friendlyError(e)}")
-            }
 
-            // 4. Notifikasi
-            try {
-                _notifications.value = apiService.getNotifications(auth)
-            } catch (e: Exception) {
-                // Notifikasi gagal tidak kritikal
+                try {
+                    _notifications.value = apiService.getNotifications(auth)
+                } catch (e: Exception) { }
+            } else if (currentUser.role == Role.GUEST) {
+                // Untuk Guest, kita coba ambil semua booking agar Dashboard tidak kosong (jika backend mengizinkan public view)
+                try {
+                    _peminjamanList.value = apiService.getAllBookings(null)
+                } catch (e: Exception) {
+                    _peminjamanList.value = emptyList()
+                }
             }
 
             _isLoading.value = false
@@ -312,6 +330,25 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 logMessage("Error validasi: ${friendlyError(e)}")
+            }
+        }
+    }
+
+    fun switchRoom(bookingId: Int, newRuangId: Int, alasan: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val request = SwitchRoomRequest(newRuangId = newRuangId, alasan = alasan)
+                val response = apiService.switchRoom(bearerToken(), bookingId, request)
+                if (response.isSuccessful) {
+                    refreshDataFromServer()
+                    onResult(true, "Berhasil mengalihkan ruangan.")
+                } else {
+                    val msg = parseErrorMessage(response)
+                    logMessage("Gagal mengalihkan: $msg")
+                    onResult(false, msg)
+                }
+            } catch (e: Exception) {
+                onResult(false, friendlyError(e))
             }
         }
     }
@@ -446,24 +483,38 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val start = sdf.parse(startDate) ?: java.util.Date()
                 val token = bearerToken()
 
-                // Ambil data untuk 7 hari ke depan
-                for (i in 0 until 7) {
-                    calendar.time = start
-                    calendar.add(java.util.Calendar.DAY_OF_YEAR, i)
-                    val currentDateStr = sdf.format(calendar.time)
+                // List untuk menampung deferred results agar bisa dijalankan paralel
+                val deferredRequests = (0 until 7).map { i ->
+                    val cal = java.util.Calendar.getInstance().apply {
+                        time = start
+                        add(java.util.Calendar.DAY_OF_YEAR, i)
+                    }
+                    val dateStr = sdf.format(cal.time)
                     
-                    try {
-                        val available = apiService.getAvailableRooms(
-                            token, currentDateStr, waktuMulai, waktuSelesai, kapasitas, gedungId
-                        )
-                        results[currentDateStr] = available
-                    } catch (e: Exception) {
-                        results[currentDateStr] = emptyList()
+                    // Gunakan 'async' untuk setiap request agar berjalan di latar belakang secara bersamaan
+                    async {
+                        try {
+                            val available = apiService.getAvailableRooms(
+                                token, dateStr, waktuMulai, waktuSelesai, kapasitas, gedungId
+                            )
+                            dateStr to available
+                        } catch (e: Exception) {
+                            dateStr to emptyList<Ruangan>()
+                        }
                     }
                 }
+
+                // Menunggu semua request selesai secara bersamaan (Parallel Await)
+                val responses = deferredRequests.awaitAll()
+                
+                // Gabungkan hasil ke dalam map
+                responses.forEach { (date, rooms) ->
+                    results[date] = rooms
+                }
+                
                 _weeklyAvailability.value = results
             } catch (e: Exception) {
-                logMessage("Gagal memuat ketersediaan sepekan")
+                logMessage("Gagal memuat ketersediaan sepekan: ${friendlyError(e)}")
             } finally {
                 _isLoadingWeekly.value = false
             }
@@ -476,9 +527,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private fun parseErrorMessage(response: retrofit2.Response<*>): String {
         return try {
             val errorJson = response.errorBody()?.string()
-            // Parse manual — tidak bergantung pada class ResponseModel tertentu
             val jsonObj = gson.fromJson(errorJson, com.google.gson.JsonObject::class.java)
-            jsonObj?.get("message")?.asString
+            // Cek field "message" atau "error" sesuai backend
+            jsonObj?.get("message")?.asString 
+                ?: jsonObj?.get("error")?.asString
                 ?: "Error ${response.code()}: ${response.message()}"
         } catch (e: Exception) {
             "Error ${response.code()}: ${response.message()}"
